@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI | Automated Data Science Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-gray-100 font-['Inter']">
+
+    <!-- Section 1: Sticky Navbar -->
+    <nav class="sticky top-0 z-50 glass border-b border-white/5 py-4 px-8 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+            </div>
+            <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="login.html" class="border border-white/20 bg-white/5 rounded-xl px-6 py-2 text-sm font-semibold hover:bg-white/10 transition-colors">Login</a>
+            <a href="signup.html" class="bg-gradient-primary rounded-xl px-6 py-2 text-sm font-semibold hover:scale-105 transition-transform">Get Started Free</a>
+        </div>
+    </nav>
+
+    <!-- Section 2: Hero Section -->
+    <section class="relative min-h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+        <!-- Blur Blobs -->
+        <div class="bg-blur-blob top-0 right-0 bg-primary/20 -translate-y-1/2 translate-x-1/4"></div>
+        <div class="bg-blur-blob bottom-0 left-0 bg-secondary/20 translate-y-1/2 -translate-x-1/4"></div>
+
+        <div class="relative z-10 max-w-4xl mx-auto">
+            <div class="inline-flex items-center gap-2 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs px-4 py-1 mb-6 font-bold uppercase tracking-widest">
+                <span>✦ Powered by Gemini AI</span>
+            </div>
+            <h1 class="text-6xl md:text-8xl font-bold font-['Outfit'] leading-tight mb-4">
+                Upload your data.<br>
+                <span class="text-gradient">We do the rest.</span>
+            </h1>
+            <p class="text-gray-400 text-xl max-w-2xl mx-auto mt-4 mb-10 leading-relaxed">
+                Automated preprocessing, EDA analysis, AI dashboards and ML model building. No coding required.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a href="upload.html" class="btn-primary rounded-xl px-8 py-4 font-bold text-lg inline-flex items-center gap-2">
+                    <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                    Upload Your Dataset
+                </a>
+                <a href="#how-it-works" class="border border-white/20 bg-white/5 rounded-xl px-8 py-4 font-bold text-lg inline-flex items-center gap-2 hover:bg-white/10 transition-colors">
+                    <i data-lucide="play-circle" class="w-5 h-5"></i>
+                    See How It Works
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Stats Bar -->
+    <div class="relative z-20 px-8 -mt-12">
+        <div class="glass max-w-6xl mx-auto rounded-3xl border border-white/10 p-8 grid grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="text-center">
+                <div class="text-3xl font-bold text-gradient mb-1">50,000+</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-bold">Users</div>
+            </div>
+            <div class="text-center border-l border-white/10 lg:pl-8">
+                <div class="text-3xl font-bold text-gradient mb-1">1M+</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-bold">Datasets Analyzed</div>
+            </div>
+            <div class="text-center border-l border-white/10 lg:pl-8">
+                <div class="text-3xl font-bold text-gradient mb-1">99.9%</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-bold">Uptime</div>
+            </div>
+            <div class="text-center border-l border-white/10 lg:pl-8">
+                <div class="text-3xl font-bold text-gradient mb-1">15+</div>
+                <div class="text-xs text-gray-400 uppercase tracking-widest font-bold">Chart Types</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Features Section -->
+    <section id="features" class="py-24 px-8 max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold mb-4 font-['Outfit']">Everything automated for you</h2>
+            <p class="text-gray-400 text-lg max-w-2xl mx-auto">From raw data to insights in minutes</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Feature Cards -->
+            <div class="glass rounded-2xl p-8 border border-white/5 glass-hover group">
+                <div class="w-12 h-12 bg-primary/20 text-primary rounded-xl flex items-center justify-center mb-6">
+                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Smart Upload</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">CSV and Excel files parsed instantly with real-time preview and validation</p>
+            </div>
+
+            <div class="glass rounded-2xl p-8 border border-white/5 glass-hover group">
+                <div class="w-12 h-12 bg-secondary/20 text-secondary rounded-xl flex items-center justify-center mb-6">
+                    <i data-lucide="filter" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">AI Preprocessing</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Missing values, outliers and encoding handled automatically with AI suggestions</p>
+            </div>
+
+            <div class="glass rounded-2xl p-8 border border-white/5 glass-hover group">
+                <div class="w-12 h-12 bg-accent/20 text-accent rounded-xl flex items-center justify-center mb-6">
+                    <i data-lucide="bar-chart-2" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Full EDA Analysis</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Univariate, bivariate and multivariate charts generated automatically</p>
+            </div>
+
+            <div class="glass rounded-2xl p-8 border border-white/5 glass-hover group">
+                <div class="w-12 h-12 bg-primary/20 text-primary rounded-xl flex items-center justify-center mb-6">
+                    <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">AI Dashboards</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Auto-generated dashboards with BI optimization suggestions and conclusions</p>
+            </div>
+
+            <div class="glass rounded-2xl p-8 border border-white/5 glass-hover group">
+                <div class="w-12 h-12 bg-secondary/20 text-secondary rounded-xl flex items-center justify-center mb-6">
+                    <i data-lucide="cpu" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">ML Model Builder</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Top 3 model recommendations with accuracy scores and exportable Python code</p>
+            </div>
+
+            <div class="glass rounded-2xl p-8 border border-white/5 glass-hover group">
+                <div class="w-12 h-12 bg-accent/20 text-accent rounded-xl flex items-center justify-center mb-6">
+                    <i data-lucide="database" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-3">Multi-Dataset Analysis</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">Upload multiple datasets and merge them for combined cross-dataset insights</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: How It Works -->
+    <section id="how-it-works" class="py-24 px-8 bg-white/2">
+        <div class="max-w-7xl mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-20 font-['Outfit']">How it works</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-7 items-start gap-8">
+                <!-- Step 1 -->
+                <div class="md:col-span-1 text-center group">
+                    <div class="relative inline-block mb-6">
+                        <div class="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl relative z-10">1</div>
+                        <div class="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse"></div>
+                    </div>
+                    <div class="mb-4 flex justify-center text-primary"><i data-lucide="upload-cloud" class="w-8 h-8"></i></div>
+                    <h3 class="font-bold mb-2">Upload Dataset</h3>
+                    <p class="text-xs text-gray-400">CSV or Excel, up to 500MB</p>
+                </div>
+
+                <div class="hidden md:flex md:col-span-1 justify-center pt-8 text-gray-700">
+                    <i data-lucide="chevron-right" class="w-8 h-8"></i>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="md:col-span-1 text-center group">
+                    <div class="relative inline-block mb-6">
+                        <div class="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl relative z-10">2</div>
+                    </div>
+                    <div class="mb-4 flex justify-center text-primary"><i data-lucide="settings" class="w-8 h-8"></i></div>
+                    <h3 class="font-bold mb-2">AI Preprocessing</h3>
+                    <p class="text-xs text-gray-400">Clean and prepare your data</p>
+                </div>
+
+                <div class="hidden md:flex md:col-span-1 justify-center pt-8 text-gray-700">
+                    <i data-lucide="chevron-right" class="w-8 h-8"></i>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="md:col-span-1 text-center group">
+                    <div class="relative inline-block mb-6">
+                        <div class="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl relative z-10">3</div>
+                    </div>
+                    <div class="mb-4 flex justify-center text-primary"><i data-lucide="pie-chart" class="w-8 h-8"></i></div>
+                    <h3 class="font-bold mb-2">Explore & Visualize</h3>
+                    <p class="text-xs text-gray-400">Charts, EDA and dashboards</p>
+                </div>
+
+                <div class="hidden md:flex md:col-span-1 justify-center pt-8 text-gray-700">
+                    <i data-lucide="chevron-right" class="w-8 h-8"></i>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="md:col-span-1 text-center group">
+                    <div class="relative inline-block mb-6">
+                        <div class="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center text-white font-bold text-xl relative z-10">4</div>
+                    </div>
+                    <div class="mb-4 flex justify-center text-primary"><i data-lucide="cpu" class="w-8 h-8"></i></div>
+                    <h3 class="font-bold mb-2">Build ML Model</h3>
+                    <p class="text-xs text-gray-400">Export production Python code</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: CTA Banner -->
+    <section class="px-8 py-16">
+        <div class="glass max-w-6xl mx-auto rounded-[3rem] border border-white/10 p-16 text-center relative overflow-hidden">
+            <div class="bg-blur-blob top-0 left-0 bg-primary/10 -translate-x-1/2 -translate-y-1/2"></div>
+            <div class="relative z-10">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6 font-['Outfit']">Ready to automate your data science?</h2>
+                <p class="text-gray-400 text-xl mb-10 max-w-2xl mx-auto">Join thousands of analysts saving hours every week</p>
+                <a href="signup.html" class="btn-primary rounded-xl px-12 py-5 font-bold text-xl glow-purple hover:scale-105 transition-transform inline-block">
+                    Start For Free — No Coding Required
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 7: Footer -->
+    <footer class="bg-dark/80 border-t border-white/5 py-12 px-8">
+        <div class="max-w-7xl mx-auto flex flex-col md:row justify-between items-center gap-8">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-gradient-primary rounded flex items-center justify-center">
+                    <i data-lucide="brain" class="w-4 h-4 text-white"></i>
+                </div>
+                <span class="font-bold font-['Outfit']">DataMind AI</span>
+            </div>
+            
+            <div class="text-gray-500 text-sm">
+                © 2025 DataMind AI. All rights reserved.
+            </div>
+
+            <div class="flex items-center gap-6">
+                <a href="login.html" class="text-gray-400 hover:text-white transition-colors text-sm">Login</a>
+                <a href="signup.html" class="text-gray-400 hover:text-white transition-colors text-sm">Sign Up</a>
+                <a href="contact.html" class="text-gray-400 hover:text-white transition-colors text-sm">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        lucide.createIcons();
+
+        // Smooth scroll for the "See How It Works" button (redundant due to scroll-smooth class but explicit for JS requirement)
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>

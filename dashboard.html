@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — Dashboard</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Project Config -->
+    <script src="config.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </div>
+
+            <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+              <a href="dashboard.html" class="nav-link active">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+              <a href="upload.html" class="nav-link">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+              <a href="preprocessing.html" class="nav-link">
+                <i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+                
+                
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+              <a href="visualization.html" class="nav-link">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+              <a href="chatbot.html" class="nav-link">
+                <i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+              <a href="report.html" class="nav-link">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+              <a href="ml-model.html" class="nav-link">
+                <i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+              <a href="contact.html" class="nav-link">
+                <i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+            </nav>
+
+            <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+                <a href="settings.html" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+                <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content relative bg-dark/50 overflow-y-auto">
+            <!-- Top Navbar -->
+            <header class="sticky top-0 z-30 glass border-b border-white/5 py-4 px-8 flex justify-between items-center">
+                
+                <div class="flex items-center gap-6 flex-grow max-w-xl"><button id="hamburgerBtn" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:34px;height:34px;background:transparent;border:none;cursor:pointer;flex-shrink:0;border-radius:8px;padding:4px;margin-right:4px;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'"><span id="hb1" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb2" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb3" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span></button>
+                    <h1 class="text-xl font-bold font-['Outfit'] whitespace-nowrap">Analytics Dashboard</h1>
+                    <div class="relative w-full">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"></i>
+                        <input type="text" placeholder="Search insights..." class="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/5 rounded-lg text-sm focus:border-primary outline-none transition-all">
+                    </div>
+                    <div id="activeFileBadge" class="hidden"></div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <button class="relative p-2 text-gray-400 hover:text-white transition-colors">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    
+                    <div class="relative">
+                        <div id="profileDropdownBtn" class="flex items-center gap-3 pl-6 border-l border-white/5 group cursor-pointer">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-sm font-bold user-name-display">John Doe</div>
+                                <div class="text-[10px] text-gray-500">Pro Plan</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-primary p-[2px]">
+                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile">
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                            <div class="px-4 py-3 border-b border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p>
+                                <p class="text-xs font-medium truncate user-name-display">John Doe</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                                </a>
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                                </a>
+                            </div>
+                            <div class="h-px bg-white/5 my-1"></div>
+                            <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 transition-colors text-left">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Empty State (Hidden by default) -->
+            <div id="emptyState" class="hidden p-8 flex flex-col items-center justify-center min-h-[60vh] text-center">
+                <div class="glass border-2 border-dashed border-primary/30 p-12 rounded-[2rem] max-w-md w-full">
+                    <div class="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i data-lucide="upload-cloud" class="w-10 h-10 text-primary"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold mb-2 font-['Outfit']">No Dataset Loaded</h2>
+                    <p class="text-gray-400 mb-8">Please upload a dataset to see your analytics</p>
+                    <a href="upload.html" class="btn-primary px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2">
+                        Upload Dataset
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dataset Switcher Tab Bar (shown only in multi-dataset mode) -->
+            <div id="datasetTabBar" class="hidden glass border-b border-white/5 px-8 py-3 flex items-center gap-4 flex-wrap sticky top-[73px] z-20">
+                <span class="text-gray-400 text-sm font-medium whitespace-nowrap">Active Dataset:</span>
+                <div id="datasetTabs" class="flex items-center gap-2 flex-wrap">
+                    <!-- Tabs injected by JS -->
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div id="dashboardContent" class="p-8 space-y-8 animate-fade-in">
+
+                <!-- Merge Panel (shown only in multi-dataset mode) -->
+                <div id="mergePanelWrapper" class="hidden">
+                    <button onclick="toggleMergePanel()" id="mergePanelToggle"
+                        class="glass border border-white/10 rounded-xl px-6 py-3 w-full text-left flex justify-between items-center hover:bg-white/5 transition-all">
+                        <span class="font-bold text-sm flex items-center gap-2">
+                            <span>&#x1F517;</span> Merge Datasets for Combined Analysis
+                        </span>
+                        <i data-lucide="chevron-down" id="mergeChevron" class="w-4 h-4 text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="mergePanelContent" class="hidden mt-4 glass border border-white/10 rounded-2xl p-6 space-y-4 animate-fade-in">
+                        <p class="text-gray-400 text-sm">Join datasets on a common column</p>
+                        <div class="flex gap-4 flex-wrap">
+                            <div class="flex-1 min-w-48 space-y-2">
+                                <label id="mergeLabel1" class="text-xs text-gray-500 uppercase font-bold tracking-widest">Join column from Dataset 1</label>
+                                <select id="mergeCol1" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-primary outline-none transition-all">
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-48 space-y-2">
+                                <label id="mergeLabel2" class="text-xs text-gray-500 uppercase font-bold tracking-widest">Join column from Dataset 2</label>
+                                <select id="mergeCol2" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-primary outline-none transition-all">
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="mergeDatasets()" class="px-6 py-3 bg-gradient-primary rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:scale-105 transition-all">
+                            &#x1F517; Merge Datasets
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Toast Notification -->
+                <div id="dashToast" class="hidden fixed bottom-8 right-8 z-50 glass border border-white/10 px-6 py-4 rounded-2xl shadow-2xl text-sm font-bold max-w-sm animate-slide-up"></div>
+
+                <!-- Stat Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+                    <div class="kpi-card">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Total Rows</div>
+                        <div id="kpiRows" class="stat-value text-gradient">0</div>
+                        <div class="text-[10px] text-green-500 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> +12%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Total Columns</div>
+                        <div id="kpiCols" class="stat-value text-gradient">0</div>
+                        <div class="text-[10px] text-gray-500">No change</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Missing Values</div>
+                        <div id="kpiMissing" class="stat-value text-red-400">0</div>
+                        <div class="text-[10px] text-red-500 flex items-center gap-1"><i data-lucide="trending-down" class="w-3 h-3"></i> +2%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Duplicates</div>
+                        <div id="kpiDuplicates" class="stat-value text-yellow-400">0</div>
+                        <div class="text-[10px] text-green-500 flex items-center gap-1"><i data-lucide="trending-up" class="w-3 h-3"></i> -5%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Correlation</div>
+                        <div class="stat-value text-accent">0.82</div>
+                        <div class="text-[10px] text-accent font-bold">Strong</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">AI Confidence</div>
+                        <div class="stat-value text-primary">98.4%</div>
+                        <div class="text-[10px] text-primary font-bold">High</div>
+                    </div>
+                </div>
+
+                <!-- Main Charts Grid -->
+                <div class="grid grid-cols-12 gap-6">
+                    <!-- Line Chart -->
+                    <div class="col-span-12 lg:col-span-8 chart-container animate-slide-up" style="animation-delay: 0.1s">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 id="lineChartTitle" class="font-bold font-['Outfit']">Revenue Growth Trends</h3>
+                            <div class="flex gap-2">
+                                <button class="px-3 py-1 bg-white/5 rounded-md text-[10px] hover:bg-white/10 transition-colors">Weekly</button>
+                                <button class="px-3 py-1 bg-primary/20 text-primary border border-primary/30 rounded-md text-[10px]">Monthly</button>
+                            </div>
+                        </div>
+                        <div class="h-[300px]">
+                            <canvas id="lineChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Pie Chart -->
+                    <div class="col-span-12 lg:col-span-4 chart-container animate-slide-up" style="animation-delay: 0.2s">
+                        <h3 id="pieChartTitle" class="font-bold font-['Outfit'] mb-6">Regional Distribution</h3>
+                        <div class="h-[300px] flex items-center justify-center">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart -->
+                    <div class="col-span-12 lg:col-span-6 chart-container animate-slide-up" style="animation-delay: 0.3s">
+                        <h3 id="barChartTitle" class="font-bold font-['Outfit'] mb-6">Category Performance</h3>
+                        <div class="h-[300px]">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Heatmap / Correlation Grid -->
+                    <div class="col-span-12 lg:col-span-6 chart-container animate-slide-up" style="animation-delay: 0.4s">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold font-['Outfit']">Feature Correlation Heatmap</h3>
+                            <span class="text-[10px] text-gray-500">Last updated: Just now</span>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="heatmap-grid" id="heatmap">
+                                <!-- Generated by JS -->
+                            </div>
+                            <div class="flex justify-between text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                <span>Low Correlation</span>
+                                <span>High Correlation</span>
+                            </div>
+                            <div class="h-2 w-full bg-gradient-to-r from-gray-800 via-primary/50 to-primary rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Table Section -->
+                <div class="chart-container animate-slide-up" style="animation-delay: 0.5s">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold font-['Outfit']">Top Predictive Key Performance Indicators</h3>
+                        <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">View All <i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 bg-green-500/10 text-green-500 rounded-lg flex items-center justify-center"><i data-lucide="users" class="w-6 h-6"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">User Retention</div>
+                                    <div class="text-[10px] text-gray-500">Primary KPI</div>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold mb-2">84.2%</div>
+                            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-green-500 w-[84%]"></div>
+                            </div>
+                        </div>
+                        <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center"><i data-lucide="credit-card" class="w-6 h-6"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">Average Order Value</div>
+                                    <div class="text-[10px] text-gray-500">Revenue KPI</div>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold mb-2">$128.50</div>
+                            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-primary w-[65%]"></div>
+                            </div>
+                        </div>
+                        <div class="p-6 bg-white/5 rounded-2xl border border-white/5">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-10 h-10 bg-accent/10 text-accent rounded-lg flex items-center justify-center"><i data-lucide="zap" class="w-6 h-6"></i></div>
+                                <div>
+                                    <div class="text-sm font-bold">Churn Probability</div>
+                                    <div class="text-[10px] text-gray-500">Risk KPI</div>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold mb-2">12.4%</div>
+                            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-red-500 w-[12%]"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Initialize Lucide Icons & Charts -->
+    <script>
+        // ── Multi-dataset bootstrap ────────────────────────────────────────────
+        const dm_mode           = localStorage.getItem('dm_mode') || 'single';
+        const dm_dataset_count  = parseInt(localStorage.getItem('dm_dataset_count') || '1');
+        let   dm_active_dataset = localStorage.getItem('dm_active_dataset') || '1';
+
+        function loadDataset(n) {
+            const suffix = (dm_mode === 'multiple' && n) ? `_${n}` : '';
+            const raw  = localStorage.getItem(`dm_dataset${suffix}`);
+            const cols = localStorage.getItem(`dm_columns${suffix}`);
+            return {
+                data:     raw  ? JSON.parse(raw)  : null,
+                columns:  cols ? JSON.parse(cols) : [],
+                filename: localStorage.getItem(`dm_filename${suffix}`) || '',
+                rowcount: localStorage.getItem(`dm_rowcount${suffix}`) || '0',
+                colcount: localStorage.getItem(`dm_colcount${suffix}`) || '0',
+                missing:  localStorage.getItem(`dm_missing${suffix}`)  || '0',
+            };
+        }
+
+        let activeDS = (dm_mode === 'multiple') ? loadDataset(dm_active_dataset) : loadDataset(null);
+
+        const emptyState       = document.getElementById('emptyState');
+        const dashboardContent = document.getElementById('dashboardContent');
+        const activeFileBadge  = document.getElementById('activeFileBadge');
+        let chartLine = null, chartBar = null, chartPie = null;
+
+        // ── Tab bar ────────────────────────────────────────────────────────────
+        function renderTabBar() {
+            if (dm_mode !== 'multiple' || dm_dataset_count <= 1) return;
+            document.getElementById('datasetTabBar').classList.remove('hidden');
+            const tabsDiv = document.getElementById('datasetTabs');
+            tabsDiv.innerHTML = '';
+            for (let i = 1; i <= dm_dataset_count; i++) {
+                const fname = localStorage.getItem(`dm_filename_${i}`) || `Dataset ${i}`;
+                const btn = document.createElement('button');
+                btn.id = `dsTab_${i}`;
+                btn.innerText = fname;
+                btn.onclick = () => switchDatasetTab(String(i));
+                btn.className = (String(i) === dm_active_dataset)
+                    ? 'bg-primary/20 text-primary border border-primary/30 rounded-lg px-4 py-1.5 text-sm font-bold transition-all'
+                    : 'bg-white/5 text-gray-400 rounded-lg px-4 py-1.5 text-sm hover:bg-white/10 transition-all';
+                tabsDiv.appendChild(btn);
+            }
+            if (localStorage.getItem('dm_dataset_merged')) {
+                const btn = document.createElement('button');
+                btn.id = 'dsTab_combined';
+                btn.innerText = '🔗 Combined View';
+                btn.onclick = () => switchDatasetTab('combined');
+                btn.className = (dm_active_dataset === 'combined')
+                    ? 'bg-accent/20 text-accent border border-accent/30 rounded-lg px-4 py-1.5 text-sm font-bold transition-all'
+                    : 'bg-white/5 text-gray-400 rounded-lg px-4 py-1.5 text-sm hover:bg-white/10 transition-all';
+                tabsDiv.appendChild(btn);
+            }
+        }
+
+        function switchDatasetTab(n) {
+            dm_active_dataset = n;
+            localStorage.setItem('dm_active_dataset', n);
+            for (let i = 1; i <= dm_dataset_count; i++) {
+                const t = document.getElementById(`dsTab_${i}`);
+                if (t) t.className = (String(i) === n)
+                    ? 'bg-primary/20 text-primary border border-primary/30 rounded-lg px-4 py-1.5 text-sm font-bold transition-all'
+                    : 'bg-white/5 text-gray-400 rounded-lg px-4 py-1.5 text-sm hover:bg-white/10 transition-all';
+            }
+            const ct = document.getElementById('dsTab_combined');
+            if (ct) ct.className = (n === 'combined')
+                ? 'bg-accent/20 text-accent border border-accent/30 rounded-lg px-4 py-1.5 text-sm font-bold transition-all'
+                : 'bg-white/5 text-gray-400 rounded-lg px-4 py-1.5 text-sm hover:bg-white/10 transition-all';
+            if (n === 'combined') {
+                const mRaw = localStorage.getItem('dm_dataset_merged');
+                const mCols = localStorage.getItem('dm_columns_merged');
+                const mData = mRaw ? JSON.parse(mRaw) : [];
+                activeDS = { data: mData, columns: mCols ? JSON.parse(mCols) : [],
+                    filename: 'Combined Dataset', rowcount: String(mData.length),
+                    colcount: String(mCols ? JSON.parse(mCols).length : 0), missing: '0' };
+            } else {
+                activeDS = loadDataset(n);
+            }
+            refreshDashboard(activeDS);
+        }
+
+        // ── Merge helpers ──────────────────────────────────────────────────────
+        function toggleMergePanel() {
+            const panel   = document.getElementById('mergePanelContent');
+            const chevron = document.getElementById('mergeChevron');
+            panel.classList.toggle('hidden');
+            chevron.style.transform = panel.classList.contains('hidden') ? '' : 'rotate(180deg)';
+        }
+
+        function populateMergeDropdowns() {
+            const cols1 = JSON.parse(localStorage.getItem('dm_columns_1') || '[]');
+            const cols2 = JSON.parse(localStorage.getItem('dm_columns_2') || '[]');
+            document.getElementById('mergeLabel1').innerText = `Join column from ${localStorage.getItem('dm_filename_1') || 'Dataset 1'}`;
+            document.getElementById('mergeLabel2').innerText = `Join column from ${localStorage.getItem('dm_filename_2') || 'Dataset 2'}`;
+            document.getElementById('mergeCol1').innerHTML = cols1.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('mergeCol2').innerHTML = cols2.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function mergeDatasets() {
+            const ds1Raw = localStorage.getItem('dm_dataset_1');
+            const ds2Raw = localStorage.getItem('dm_dataset_2');
+            if (!ds1Raw || !ds2Raw) { showToast('❌ Both datasets are required for merging.', 'red'); return; }
+            const ds1  = JSON.parse(ds1Raw);
+            const ds2  = JSON.parse(ds2Raw);
+            const jc1  = document.getElementById('mergeCol1').value;
+            const jc2  = document.getElementById('mergeCol2').value;
+            const cols2 = JSON.parse(localStorage.getItem('dm_columns_2') || '[]');
+            const map2 = {};
+            ds2.forEach(row => { const k = String(row[jc2]); if (!map2[k]) map2[k] = []; map2[k].push(row); });
+            const merged = [];
+            ds1.forEach(row1 => {
+                (map2[String(row1[jc1])] || []).forEach(row2 => {
+                    const combined = { ...row1 };
+                    cols2.forEach(col => {
+                        const key = Object.prototype.hasOwnProperty.call(row1, col) ? `${col}_2` : col;
+                        combined[key] = row2[col];
+                    });
+                    merged.push(combined);
+                });
+            });
+            if (merged.length === 0) {
+                showToast('⚠️ No matching rows found. Check if the join columns contain the same values.', 'yellow');
+                return;
+            }
+            localStorage.setItem('dm_dataset_merged', JSON.stringify(merged));
+            localStorage.setItem('dm_columns_merged', JSON.stringify(Object.keys(merged[0])));
+            showToast(`✅ Merged ${merged.length} matching rows from both datasets`, 'green');
+            renderTabBar();
+        }
+
+        function showToast(msg, color) {
+            const toast = document.getElementById('dashToast');
+            const map = { green:'border-green-500/30 text-green-400', red:'border-red-500/30 text-red-400', yellow:'border-yellow-500/30 text-yellow-400' };
+            toast.className = `fixed bottom-8 right-8 z-50 glass border px-6 py-4 rounded-2xl shadow-2xl text-sm font-bold max-w-sm animate-slide-up ${map[color]||''}`;
+            toast.innerText = msg;
+            toast.classList.remove('hidden');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+
+        // ── Dashboard refresh ──────────────────────────────────────────────────
+        function refreshDashboard(ds) {
+            const { data, columns, filename, rowcount, colcount, missing } = ds;
+            if (filename) {
+                activeFileBadge.innerHTML = `<i data-lucide="file-text" class="w-3 h-3"></i> Active: ${filename}`;
+                activeFileBadge.className = "flex items-center gap-2 mt-2 px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full border border-green-500/20 w-fit uppercase tracking-wider";
+                activeFileBadge.classList.remove('hidden');
+            }
+            document.getElementById('kpiRows').innerText    = parseInt(rowcount).toLocaleString();
+            document.getElementById('kpiCols').innerText    = colcount;
+            document.getElementById('kpiMissing').innerText = parseInt(missing).toLocaleString();
+            const rs = data.map(r => JSON.stringify(r));
+            document.getElementById('kpiDuplicates').innerText = rs.length - new Set(rs).size;
+            if (chartLine) { chartLine.destroy(); chartLine = null; }
+            if (chartBar)  { chartBar.destroy();  chartBar  = null; }
+            if (chartPie)  { chartPie.destroy();  chartPie  = null; }
+            initializeCharts(data, columns);
+            lucide.createIcons();
+        }
+
+        // ── Boot ───────────────────────────────────────────────────────────────
+        if (!activeDS.data || activeDS.data.length === 0) {
+            emptyState.classList.remove('hidden');
+            dashboardContent.classList.add('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+            dashboardContent.classList.remove('hidden');
+            refreshDashboard(activeDS);
+            if (dm_mode === 'multiple' && dm_dataset_count > 1) {
+                document.getElementById('mergePanelWrapper').classList.remove('hidden');
+                populateMergeDropdowns();
+                renderTabBar();
+            }
+        }
+
+        lucide.createIcons();
+
+        // ── Charts ─────────────────────────────────────────────────────────────
+        function initializeCharts(data, cols) {
+            Chart.defaults.color = '#9CA3AF';
+            Chart.defaults.font.family = 'Inter';
+
+            let numericCol = null;
+            for (let col of cols) {
+                let n = 0;
+                data.forEach(row => { if (!isNaN(parseFloat(row[col]))) n++; });
+                if (n / data.length > 0.7) { numericCol = col; break; }
+            }
+            const lineLabels = numericCol ? data.slice(0,7).map((_,i)=>i+1) : ['Jan','Feb','Mar','Apr','May','Jun','Jul'];
+            const lineData   = numericCol ? data.slice(0,7).map(r=>parseFloat(r[numericCol])) : [30,45,38,65,58,85,92];
+            if (numericCol) document.getElementById('lineChartTitle').innerText = `Trend Analysis: ${numericCol}`;
+
+            chartLine = new Chart(document.getElementById('lineChart').getContext('2d'), {
+                type:'line',
+                data:{ labels:lineLabels, datasets:[{ label:numericCol||'Revenue', data:lineData,
+                    borderColor:'#8B5CF6', backgroundColor:'rgba(139,92,246,0.1)', fill:true,
+                    tension:0.4, borderWidth:3, pointRadius:4, pointBackgroundColor:'#8B5CF6' }] },
+                options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+                    scales:{ y:{grid:{color:'rgba(255,255,255,0.05)'}}, x:{grid:{display:false}} } }
+            });
+
+            const categoricalCols = cols.filter(col => {
+                let s = 0;
+                data.forEach(row => { if (typeof row[col]==='string' && isNaN(parseFloat(row[col]))) s++; });
+                return s / data.length > 0.5;
+            });
+
+            let barLabels = ['Saas','E-com','Fintech','Health','Crypto'], barData = [85,72,64,58,42];
+            if (categoricalCols.length > 0) {
+                const tc = categoricalCols[0];
+                document.getElementById('barChartTitle').innerText = `Distribution: ${tc}`;
+                const freq = {};
+                data.forEach(r => { const v=r[tc]||'Unknown'; freq[v]=(freq[v]||0)+1; });
+                const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+                barLabels = sorted.map(s=>s[0]); barData = sorted.map(s=>s[1]);
+            }
+            chartBar = new Chart(document.getElementById('barChart').getContext('2d'), {
+                type:'bar',
+                data:{ labels:barLabels, datasets:[{ label:'Count', data:barData,
+                    backgroundColor:'rgba(59,130,246,0.6)', borderColor:'#3B82F6', borderWidth:1, borderRadius:8 }] },
+                options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+                    scales:{ y:{grid:{color:'rgba(255,255,255,0.05)'}}, x:{grid:{display:false}} } }
+            });
+
+            let pieLabels = ['NA','Europe','Asia','Others'], pieData = [45,25,20,10];
+            if (categoricalCols.length > 1) {
+                const tc = categoricalCols[1];
+                document.getElementById('pieChartTitle').innerText = `Composition: ${tc}`;
+                const freq = {};
+                data.forEach(r => { const v=r[tc]||'Unknown'; freq[v]=(freq[v]||0)+1; });
+                const sorted = Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,4);
+                pieLabels = sorted.map(s=>s[0]); pieData = sorted.map(s=>s[1]);
+            }
+            chartPie = new Chart(document.getElementById('pieChart').getContext('2d'), {
+                type:'doughnut',
+                data:{ labels:pieLabels, datasets:[{ data:pieData,
+                    backgroundColor:['#8B5CF6','#3B82F6','#06B6D4','#F472B6'], borderWidth:0, hoverOffset:10 }] },
+                options:{ responsive:true, maintainAspectRatio:false,
+                    plugins:{ legend:{position:'bottom', labels:{boxWidth:12, padding:20}} }, cutout:'70%' }
+            });
+
+            const heatmap = document.getElementById('heatmap');
+            heatmap.innerHTML = '';
+            for (let i = 0; i < 25; i++) {
+                const rI=Math.floor(i/5), cI=i%5;
+                const cell = document.createElement('div');
+                cell.className = 'heatmap-cell';
+                const opacity = (cI*rI%10)/10;
+                cell.style.background = `rgba(139,92,246,${opacity})`;
+                cell.title = `${cols[cI]||'Feature '+(cI+1)}: ${opacity.toFixed(1)}`;
+                heatmap.appendChild(cell);
+            }
+        }
+    </script>
+    <!-- Firebase Auth Guard -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Update User Identity
+                const storedName = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+                if (storedName) {
+                    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = storedName);
+                    document.querySelectorAll('.user-avatar-display').forEach(el => {
+                        el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedName)}&background=random`;
+                    });
+                }
+            }
+        });
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        
+        const handleLogout = async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            localStorage.removeItem('dm_user_email');
+            localStorage.removeItem('dm_user_name');
+            window.location.href = 'index.html';
+        };
+
+        if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+        if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+
+        // Dropdown Toggle Logic
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (menuToggle) {
+          menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+          });
+          overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+          });
+        }
+    </script>
+    </script>
+<script>
+(function(){
+  var btn=document.getElementById('hamburgerBtn');
+  var sidebar=document.querySelector('.sidebar');
+  var h1=document.getElementById('hb1');
+  var h2=document.getElementById('hb2');
+  var h3=document.getElementById('hb3');
+  if(!btn||!sidebar)return;
+  sidebar.style.transition='margin-left 0.3s ease';
+  var open=localStorage.getItem('dm_sidebar_open')!=='false';
+  function applyState(isOpen,animate){
+    if(!animate)sidebar.style.transition='none';
+    sidebar.style.marginLeft=isOpen?'0px':'-260px';
+    if(!animate)setTimeout(function(){sidebar.style.transition='margin-left 0.3s ease';},50);
+    if(isOpen){h1.style.transform='none';h2.style.opacity='1';h2.style.transform='none';h3.style.transform='none';}
+    else{h1.style.transform='translateY(7px) rotate(45deg)';h2.style.opacity='0';h2.style.transform='scaleX(0)';h3.style.transform='translateY(-7px) rotate(-45deg)';}
+  }
+  applyState(open,false);
+  btn.addEventListener('click',function(){open=!open;localStorage.setItem('dm_sidebar_open',open?'true':'false');applyState(open,true);});
+})();
+</script></body>
+</html>
+
+

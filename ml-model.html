@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — ML Model Builder</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Config -->
+    <script src="config.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .step-node {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-center: center;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 10;
+        }
+        .step-line {
+            height: 2px;
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 0 -4px;
+            transition: all 0.3s ease;
+        }
+        .step-active { background: #8B5CF6; color: white; border: none; }
+        .step-completed { background: #10B981; color: white; border: none; }
+        .step-future { border: 2px solid rgba(255, 255, 255, 0.2); color: rgba(255, 255, 255, 0.5); }
+        .line-completed { background: #10B981; }
+
+        .column-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .column-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-4px);
+        }
+        .column-card.selected {
+            border-color: #3B82F6;
+            background: rgba(59, 130, 246, 0.05);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        .column-card.recommended {
+            border-color: #8B5CF6;
+        }
+
+        .problem-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+        .problem-card.selected {
+            border-color: #8B5CF6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .code-container {
+            background: #1a1b2e;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            padding: 24px;
+            border-radius: 16px;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.6;
+        }
+        .keyword { color: #CBA6F7; }
+        .string { color: #A6E3A1; }
+        .comment { color: #6C7086; }
+        .function { color: #89B4FA; }
+        .number { color: #FAB387; }
+
+        .confusion-matrix-cell {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </div>
+
+
+
+            <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+              <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+              <a href="upload.html" class="nav-link">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+              <a href="preprocessing.html" class="nav-link">
+                <i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+                
+                
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+              <a href="visualization.html" class="nav-link">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+              <a href="chatbot.html" class="nav-link">
+                <i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+              <a href="report.html" class="nav-link">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+              <a href="ml-model.html" class="nav-link active">
+                <i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+              <a href="contact.html" class="nav-link">
+                <i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+            </nav>
+
+            <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+                <a href="settings.html" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+                <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content relative bg-dark/50 flex flex-col h-screen">
+            <!-- Top Navbar -->
+            <header class="sticky top-0 z-30 glass border-b border-white/5 py-4 px-8 flex justify-between items-center shrink-0">
+                
+                <div class="flex items-center gap-6 flex-grow max-w-xl"><button id="hamburgerBtn" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:34px;height:34px;background:transparent;border:none;cursor:pointer;flex-shrink:0;border-radius:8px;padding:4px;margin-right:4px;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'"><span id="hb1" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb2" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb3" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span></button>
+                    <h1 class="text-xl font-bold font-['Outfit'] whitespace-nowrap">ML Model Builder</h1>
+                    <div id="activeFileBadge" class="hidden"></div>
+                </div>
+                
+                    <div class="relative">
+                        <div id="profileDropdownBtn" class="flex items-center gap-3 pl-6 border-l border-white/5 group cursor-pointer">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-sm font-bold user-name-display group-hover:text-primary transition-colors">John Doe</div>
+                                <div class="text-[10px] text-gray-500">Administrator</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-primary p-[2px]">
+                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile">
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 ml-1"></i>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                            <div class="px-4 py-3 border-b border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p>
+                                <p class="text-xs font-medium truncate user-name-display">John Doe</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                                </a>
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                                </a>
+                            </div>
+                            <div class="h-px bg-white/5 my-1"></div>
+                            <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 transition-colors text-left">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+            </header>
+
+            <!-- Step Progress Bar -->
+            <div class="px-8 py-6 bg-dark/30 border-b border-white/5 shrink-0">
+                <div class="max-w-3xl mx-auto flex items-center">
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="stepNode1" class="step-node step-active">1</div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-primary">Choose Target</span>
+                    </div>
+                    <div id="stepLine1" class="step-line"></div>
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="stepNode2" class="step-node step-future">2</div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Select Model</span>
+                    </div>
+                    <div id="stepLine2" class="step-line"></div>
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center gap-2">
+                        <div id="stepNode3" class="step-node step-future">3</div>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-gray-500">Results & Code</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scrollable Content Area -->
+            <div class="flex-grow overflow-y-auto p-8">
+                <div class="max-w-6xl mx-auto">
+                    
+                    <!-- STEP 1: TARGET SELECTION -->
+                    <div id="panelStep1" class="space-y-8 animate-fade-in">
+                        <div class="text-center space-y-2">
+                            <h2 class="text-3xl font-bold font-['Outfit']">What do you want to predict?</h2>
+                            <p class="text-gray-400">Select the column your ML model will learn to predict.</p>
+                        </div>
+
+                        <!-- Recommendation Banner -->
+                        <div id="recommendationBanner" class="hidden glass border border-primary/20 bg-primary/5 p-4 rounded-2xl flex items-center gap-4">
+                            <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
+                                <i data-lucide="sparkles" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <div id="recText" class="text-sm font-bold text-white"></div>
+                                <div id="recSubtext" class="text-xs text-gray-400">AI analysis completed based on data distribution.</div>
+                            </div>
+                        </div>
+
+                        <!-- Column Cards Grid -->
+                        <div id="columnGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Injected by JS -->
+                        </div>
+
+                        <!-- Problem Type Selector -->
+                        <div id="problemSelectorSection" class="hidden space-y-6 pt-8 border-t border-white/5 animate-slide-up">
+                            <h3 class="text-lg font-bold font-['Outfit'] text-center">Select Problem Type</h3>
+                            <div class="flex flex-wrap justify-center gap-4">
+                                <div onclick="selectProblemType('classification')" id="probClassification" class="problem-card w-64 p-6 rounded-2xl cursor-pointer hover:bg-white/5">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-10 h-10 bg-green-500/10 text-green-500 rounded-lg flex items-center justify-center">
+                                            <i data-lucide="toggle-right" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="font-bold">Classification</div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 leading-relaxed">Predict a discrete category or class (e.g. Churn vs No Churn).</p>
+                                </div>
+                                <div onclick="selectProblemType('regression')" id="probRegression" class="problem-card w-64 p-6 rounded-2xl cursor-pointer hover:bg-white/5">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-10 h-10 bg-purple-500/10 text-purple-500 rounded-lg flex items-center justify-center">
+                                            <i data-lucide="trending-up" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="font-bold">Regression</div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 leading-relaxed">Predict a continuous numerical value (e.g. Sales, Price, Temperature).</p>
+                                </div>
+                                <div onclick="selectProblemType('clustering')" id="probClustering" class="problem-card w-64 p-6 rounded-2xl cursor-pointer hover:bg-white/5 opacity-50">
+                                    <div class="flex items-center gap-3 mb-4">
+                                        <div class="w-10 h-10 bg-accent/10 text-accent rounded-lg flex items-center justify-center">
+                                            <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                                        </div>
+                                        <div class="font-bold">Clustering</div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 leading-relaxed">Find hidden groups in data. No target column needed.</p>
+                                </div>
+                            </div>
+
+                            <!-- Confirmation Bar -->
+                            <div id="confirmationBar" class="hidden max-w-xl mx-auto glass border border-green-500/20 bg-green-500/5 p-4 rounded-xl flex items-center gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-500"></i>
+                                <span id="confirmationText" class="text-xs font-medium">Target confirmed: Revenue (Regression)</span>
+                            </div>
+
+                            <!-- Next Button -->
+                            <div class="flex justify-center pt-4 pb-20">
+                                <button onclick="goToStep2()" id="btnNext1" disabled class="px-10 py-4 bg-gradient-primary rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Continue to Model Selection →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: MODEL SELECTION -->
+                    <div id="panelStep2" class="hidden space-y-8 animate-fade-in">
+                        <div class="text-center space-y-2">
+                            <h2 class="text-3xl font-bold font-['Outfit']">Select Your Model</h2>
+                            <p class="text-gray-400">AI-powered recommendations based on your target: <span id="step2TargetLabel" class="text-primary font-bold"></span></p>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="modelLoading" class="flex flex-col items-center justify-center py-20 space-y-4">
+                            <div class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                            <p class="text-sm text-gray-400 font-medium animate-pulse tracking-widest uppercase">Analyzing best models...</p>
+                        </div>
+
+                        <!-- Offline Note -->
+                        <div id="offlineNoteModels" class="hidden text-center">
+                            <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Using offline suggestions</span>
+                        </div>
+
+                        <!-- Model Grid -->
+                        <div id="modelGrid" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Injected by JS -->
+                        </div>
+
+                        <div class="flex justify-center pt-10 pb-20">
+                            <button onclick="goToStep3()" id="btnNext2" disabled class="px-10 py-4 bg-gradient-primary rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                                Train Selected Model →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: RESULTS & CODE -->
+                    <div id="panelStep3" class="hidden space-y-8 animate-fade-in pb-20">
+                        <div class="text-center space-y-2">
+                            <h2 class="text-3xl font-bold font-['Outfit']">Model Training Complete</h2>
+                            <p class="text-gray-400">Performance metrics and integration code for <span id="step3ModelLabel" class="text-primary font-bold"></span></p>
+                            <p class="text-[10px] text-gray-600 italic">Results are simulated estimates based on dataset characteristics.</p>
+                        </div>
+
+                        <!-- Metrics Row -->
+                        <div id="metricsRow" class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            <!-- Injected by JS -->
+                        </div>
+
+                        <div class="grid grid-cols-12 gap-8">
+                            <!-- Confusion Matrix / Reg Stats -->
+                            <div class="col-span-12 lg:col-span-5 chart-container">
+                                <h3 id="step3LeftPanelTitle" class="font-bold font-['Outfit'] mb-6">Classification Performance</h3>
+                                <div id="performanceContainer" class="space-y-6">
+                                    <!-- Injected by JS -->
+                                </div>
+                            </div>
+
+                            <!-- Feature Importance -->
+                            <div class="col-span-12 lg:col-span-7 chart-container">
+                                <h3 class="font-bold font-['Outfit'] mb-6">Feature Importance</h3>
+                                <div class="h-[300px]">
+                                    <canvas id="importanceChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Code Export Section -->
+                        <div class="space-y-6">
+                            <div class="flex justify-between items-end">
+                                <div class="space-y-1">
+                                    <h3 class="text-lg font-bold font-['Outfit']">Python Integration Code</h3>
+                                    <p class="text-xs text-gray-500">Ready to use in your local environment.</p>
+                                </div>
+                                <div id="offlineNoteCode" class="hidden mb-2">
+                                    <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Generated from local template</span>
+                                </div>
+                            </div>
+
+                            <div class="relative group">
+                                <div id="codeLoading" class="absolute inset-0 bg-dark/80 backdrop-blur-sm z-20 flex items-center justify-center rounded-2xl">
+                                    <div class="flex flex-col items-center gap-3">
+                                        <div class="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                        <span class="text-[10px] text-primary font-bold tracking-widest">GENERATING CODE...</span>
+                                    </div>
+                                </div>
+                                <div id="codeDisplay" class="code-container">
+                                    <!-- Syntax highlighted code injected here -->
+                                </div>
+                                <div class="absolute top-4 right-4 flex gap-2">
+                                    <button onclick="copyCode()" id="btnCopy" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                                        <i data-lucide="copy" class="w-3 h-3"></i> <span>Copy Code</span>
+                                    </button>
+                                    <button onclick="downloadCode()" class="px-3 py-1.5 bg-primary/20 hover:bg-primary/30 border border-primary/30 text-primary rounded-lg text-xs font-bold transition-all flex items-center gap-2">
+                                        <i data-lucide="download" class="w-3 h-3"></i> Download .py
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Sticky Bottom Bar -->
+            <div class="sticky bottom-0 z-40 glass border-t border-white/5 py-4 px-8 flex justify-between items-center shrink-0">
+                <a href="dashboard.html" class="flex items-center gap-2 text-xs font-bold text-gray-400 hover:text-white transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Dashboard
+                </a>
+
+                <div id="stepIndicator" class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Step 1 of 3</div>
+
+                <div class="relative">
+                    <button onclick="handleNewProject()" class="flex items-center gap-2 text-xs font-bold text-red-400 hover:text-red-300 transition-colors">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> New Project
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripting -->
+    <script>
+        // ============================================
+        // CONFIGURATION moved to config.js
+        // ============================================
+
+        // --- State ---
+        let dataset = [];
+        let columns = [];
+        let columnAnalysis = {};
+        let selectedColumn = null;
+        let selectedProblemType = 'classification';
+        let selectedModel = null;
+        let importanceChart = null;
+
+        let modelCallLoading = false;
+        let codeCallLoading = false;
+        let rawCodeText = "";
+
+        // --- Init ---
+        function init() {
+            const rawData = localStorage.getItem('dm_dataset');
+            const rawCols = localStorage.getItem('dm_columns');
+            
+            if (!rawData || !rawCols) {
+                window.location.href = 'upload.html';
+                return;
+            }
+
+            dataset = JSON.parse(rawData);
+            columns = JSON.parse(rawCols);
+
+            const filename = localStorage.getItem('dm_filename');
+            const activeFileBadge = document.getElementById('activeFileBadge');
+            if (filename) {
+                activeFileBadge.innerHTML = `<i data-lucide="file-text" class="w-3 h-3"></i> ${filename}`;
+                activeFileBadge.className = "flex items-center gap-2 px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full border border-green-500/20 uppercase tracking-wider";
+                activeFileBadge.classList.remove('hidden');
+            }
+
+            analyzeColumns();
+            
+            const target = localStorage.getItem('dm_target_column');
+            const savedStep = localStorage.getItem('dm_ml_step');
+            
+            if (target && !savedStep) {
+                renderStep('2');
+            } else {
+                renderStep(savedStep || '1');
+            }
+            lucide.createIcons();
+        }
+
+        // --- Column Analysis (Local JS) ---
+        function analyzeColumns() {
+            const rowCount = dataset.length;
+            let bestScore = -1;
+            let recommendedCol = null;
+
+            columns.forEach(col => {
+                const values = dataset.map(row => row[col]);
+                const filled = values.filter(v => v !== null && v !== undefined && v !== "");
+                const uniqueCount = new Set(filled).size;
+                const missingCount = rowCount - filled.length;
+                
+                // Detect Type
+                const numericValues = filled.filter(v => !isNaN(parseFloat(v)) && isFinite(v));
+                const numericRatio = numericValues.length / (filled.length || 1);
+                
+                let type = "text";
+                if (uniqueCount === 2) type = "binary";
+                else if (numericRatio > 0.7) type = "numeric";
+                else if (uniqueCount <= 15) type = "categorical";
+
+                // Score
+                let score = 10;
+                let reason = "High cardinality — not recommended as target";
+                const lowCol = col.toLowerCase();
+                
+                if (lowCol.includes('id') || lowCol.includes('_id') || lowCol.includes('index') || lowCol.includes('key') || lowCol.includes('code')) {
+                    score = 0;
+                    reason = "Identifier column — skip for prediction";
+                } else if (type === "binary") {
+                    score = 95;
+                    reason = "Binary column — perfect for classification";
+                } else if (type === "categorical") {
+                    if (uniqueCount <= 5) { score = 88; reason = "Few categories — ideal target"; }
+                    else if (uniqueCount <= 10) { score = 80; reason = "Manageable categories — multi-class task"; }
+                    else { score = 65; reason = "Multiple categories — multi-class classification"; }
+                } else if (type === "numeric") {
+                    if (uniqueCount > 20) { score = 72; reason = "Continuous values — regression task"; }
+                    else { score = 55; reason = "Limited range numeric column"; }
+                }
+
+                // Mode (Most common)
+                const freq = {};
+                filled.forEach(v => freq[v] = (freq[v] || 0) + 1);
+                const sortedFreq = Object.entries(freq).sort((a,b) => b[1] - a[1]);
+                const mode = sortedFreq[0] ? String(sortedFreq[0][0]) : "N/A";
+                
+                columnAnalysis[col] = { type, uniqueCount, missingCount, score, reason, mode, sortedFreq };
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    recommendedCol = col;
+                }
+            });
+
+            renderColumnGrid(recommendedCol);
+            
+            // Show Recommendation Banner
+            const banner = document.getElementById('recommendationBanner');
+            const recText = document.getElementById('recText');
+            recText.innerText = `✦ Recommended: ${recommendedCol} — ${columnAnalysis[recommendedCol].reason}. Confidence: ${bestScore}%`;
+            banner.classList.remove('hidden');
+        }
+
+        function renderColumnGrid(recommendedCol) {
+            const grid = document.getElementById('columnGrid');
+            grid.innerHTML = columns.map(col => {
+                const analysis = columnAnalysis[col];
+                const isRec = col === recommendedCol;
+                const isSelected = col === localStorage.getItem('dm_target_column');
+                
+                let typeBadge = `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    analysis.type === 'binary' ? 'bg-green-500/10 text-green-500' :
+                    analysis.type === 'numeric' ? 'bg-purple-500/10 text-purple-500' :
+                    analysis.type === 'categorical' ? 'bg-blue-500/10 text-blue-500' :
+                    'bg-gray-500/10 text-gray-500'
+                }">${analysis.type}</span>`;
+
+                let taskPill = `<div class="mt-4 inline-block px-3 py-1 rounded-full text-[10px] font-bold ${
+                    analysis.type === 'binary' ? 'bg-green-500/10 text-green-500' :
+                    analysis.type === 'categorical' ? 'bg-blue-500/10 text-blue-500' :
+                    analysis.type === 'numeric' && analysis.uniqueCount > 20 ? 'bg-purple-500/10 text-purple-500' :
+                    'bg-red-500/10 text-red-400'
+                }">${
+                    analysis.type === 'binary' ? 'Binary Classification' :
+                    analysis.type === 'categorical' ? 'Multi-class' :
+                    analysis.type === 'numeric' && analysis.uniqueCount > 20 ? 'Regression' :
+                    'Not Recommended'
+                }</div>`;
+
+                // Distribution mini bars
+                const top5 = analysis.sortedFreq.slice(0, 5);
+                const maxVal = top5[0] ? top5[0][1] : 1;
+                const bars = top5.map(([val, count]) => {
+                    const height = (count / maxVal) * 48;
+                    return `<div class="w-full bg-white/10 rounded-t-sm relative group/bar" style="height: ${height}px">
+                        <div class="hidden group-hover/bar:block absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-dark border border-white/10 p-1 rounded text-[8px] whitespace-nowrap z-50">${val}: ${count}</div>
+                    </div>`;
+                }).join('');
+
+                return `
+                    <div onclick="selectTargetColumn('${col}')" id="colCard_${col.replace(/[^a-z0-9]/gi, '_')}" 
+                        class="column-card p-5 rounded-2xl cursor-pointer relative ${isRec ? 'recommended' : ''} ${isSelected ? 'selected' : ''} ${analysis.score === 0 ? 'opacity-50' : ''}">
+                        
+                        <div class="flex justify-between items-start">
+                            ${typeBadge}
+                            ${isRec ? '<span class="text-[10px] font-bold text-primary flex items-center gap-1">✦ AI PICK</span>' : ''}
+                            ${analysis.score === 0 ? '<span class="px-2 py-0.5 rounded bg-red-500 text-white text-[8px] font-bold uppercase">Not recommended</span>' : ''}
+                        </div>
+
+                        <div class="mt-3 mb-4">
+                            <div class="text-lg font-bold truncate">${col}</div>
+                        </div>
+
+                        <div class="flex items-end gap-1 h-12 mb-6">
+                            ${bars || '<div class="w-full h-[1px] bg-white/5"></div>'}
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2 border-t border-white/5 pt-4">
+                            <div>
+                                <div class="text-[8px] text-gray-500 uppercase font-bold">Unique</div>
+                                <div class="text-xs font-bold">${analysis.uniqueCount}</div>
+                            </div>
+                            <div>
+                                <div class="text-[8px] text-gray-500 uppercase font-bold">Missing</div>
+                                <div class="text-xs font-bold ${analysis.missingCount > 0 ? 'text-red-400' : ''}">${analysis.missingCount}</div>
+                            </div>
+                            <div class="overflow-hidden">
+                                <div class="text-[8px] text-gray-500 uppercase font-bold">Mode</div>
+                                <div class="text-xs font-bold truncate">${analysis.mode.substring(0, 12)}</div>
+                            </div>
+                        </div>
+
+                        ${taskPill}
+                    </div>
+                `;
+            }).join('');
+            
+            // If we have a saved column, trigger its selection
+            const savedCol = localStorage.getItem('dm_target_column');
+            if (savedCol && columns.includes(savedCol)) {
+                selectTargetColumn(savedCol, true);
+            }
+        }
+
+        function selectTargetColumn(col, isRestoring = false) {
+            selectedColumn = col;
+            
+            // UI Updates
+            document.querySelectorAll('.column-card').forEach(c => c.classList.remove('selected'));
+            const cardId = `colCard_${col.replace(/[^a-z0-9]/gi, '_')}`;
+            const el = document.getElementById(cardId);
+            if (el) el.classList.add('selected');
+
+            // Auto-detect problem type
+            const analysis = columnAnalysis[col];
+            if (analysis.type === 'numeric' && analysis.uniqueCount > 20) {
+                selectedProblemType = 'regression';
+            } else {
+                selectedProblemType = 'classification';
+            }
+
+            // Restore from storage if we have a manually saved type
+            if (isRestoring && localStorage.getItem('dm_problem_type')) {
+                selectedProblemType = localStorage.getItem('dm_problem_type');
+            }
+
+            selectProblemType(selectedProblemType);
+
+            // Show sections
+            document.getElementById('problemSelectorSection').classList.remove('hidden');
+            document.getElementById('confirmationBar').classList.remove('hidden');
+            document.getElementById('btnNext1').disabled = false;
+            
+            document.getElementById('confirmationText').innerText = `Target confirmed: ${col} (${selectedProblemType.charAt(0).toUpperCase() + selectedProblemType.slice(1)})`;
+            
+            lucide.createIcons();
+        }
+
+        function selectProblemType(type) {
+            selectedProblemType = type;
+            document.querySelectorAll('.problem-card').forEach(c => c.classList.remove('selected'));
+            
+            const cardId = type === 'classification' ? 'probClassification' : 
+                          type === 'regression' ? 'probRegression' : 'probClustering';
+            const el = document.getElementById(cardId);
+            if (el) el.classList.add('selected');
+            
+            if (selectedColumn) {
+                document.getElementById('confirmationText').innerText = `Target confirmed: ${selectedColumn} (${type.charAt(0).toUpperCase() + type.slice(1)})`;
+            }
+        }
+
+        // --- Step Transitions ---
+        function renderStep(step) {
+            // Hide all panels
+            document.getElementById('panelStep1').classList.add('hidden');
+            document.getElementById('panelStep2').classList.add('hidden');
+            document.getElementById('panelStep3').classList.add('hidden');
+
+            // Reset progress bar styling
+            for (let i = 1; i <= 3; i++) {
+                const node = document.getElementById(`stepNode${i}`);
+                const line = document.getElementById(`stepLine${i}`);
+                const span = node.nextElementSibling;
+                
+                node.className = 'step-node';
+                if (line) line.className = 'step-line';
+                span.className = 'text-[10px] font-bold uppercase tracking-widest';
+
+                if (i < step) {
+                    node.classList.add('step-completed');
+                    node.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i>';
+                    if (line) line.classList.add('line-completed');
+                    span.classList.add('text-green-500');
+                } else if (i == step) {
+                    node.classList.add('step-active');
+                    node.innerText = i;
+                    span.classList.add('text-primary');
+                } else {
+                    node.classList.add('step-future');
+                    node.innerText = i;
+                    span.classList.add('text-gray-500');
+                }
+            }
+
+            document.getElementById('stepIndicator').innerText = `Step ${step} of 3`;
+
+            // Show relevant panel
+            const panel = document.getElementById(`panelStep${step}`);
+            panel.classList.remove('hidden');
+
+            if (step == '2') loadStep2();
+            if (step == '3') loadStep3();
+
+            lucide.createIcons();
+        }
+
+        function goToStep2() {
+            setLoading(document.getElementById('btnNext1'), true, 'Preparing...');
+            localStorage.setItem('dm_ml_step', '2');
+            localStorage.setItem('dm_target_column', selectedColumn);
+            localStorage.setItem('dm_problem_type', selectedProblemType);
+            
+            const panel1 = document.getElementById('panelStep1');
+            panel1.style.transform = 'translateY(-10px)';
+            panel1.style.opacity = '0';
+            
+            setTimeout(() => {
+                renderStep('2');
+                setLoading(document.getElementById('btnNext1'), false);
+            }, 800);
+        }
+
+        function goToStep3() {
+            setLoading(document.getElementById('btnNext2'), true, 'Training...');
+            localStorage.setItem('dm_ml_step', '3');
+            localStorage.setItem('dm_selected_model', selectedModel);
+            
+            const panel2 = document.getElementById('panelStep2');
+            panel2.style.transform = 'translateY(-10px)';
+            panel2.style.opacity = '0';
+            
+            setTimeout(() => {
+                renderStep('3');
+                setLoading(document.getElementById('btnNext2'), false);
+            }, 1200);
+        }
+
+        // --- Step 2 Logic ---
+        async function loadStep2() {
+            const target = localStorage.getItem('dm_target_column');
+            document.getElementById('step2TargetLabel').innerText = target;
+            
+            document.getElementById('modelLoading').classList.remove('hidden');
+            document.getElementById('modelGrid').classList.add('hidden');
+            document.getElementById('offlineNoteModels').classList.add('hidden');
+
+            // Artificial delay for effect
+            await new Promise(r => setTimeout(r, 800));
+
+            if (modelCallLoading) return;
+            modelCallLoading = true;
+
+            const problemType = localStorage.getItem('dm_problem_type');
+            const rowCount = localStorage.getItem('dm_rowcount');
+            const colCount = localStorage.getItem('dm_colcount');
+
+            const prompt = `ML task: ${problemType}. Target: ${target}. Dataset: ${rowCount} rows, ${colCount} cols, columns: ${columns.join(',')}. Recommend 3 ML models. Reply ONLY with JSON array: [{"name":"","accuracy_range":"","pros":["",""],"cons":[""],"best_for":""}] No explanation. JSON only.`;
+
+            try {
+                const url = `${CONFIG.geminiEndpoint}${CONFIG.geminiModel}:generateContent?key=${CONFIG.geminiApiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { maxOutputTokens: CONFIG.maxTokens }
+                    })
+                });
+
+                if (!response.ok) throw new Error('API request failed');
+
+                const data = await response.json();
+                let jsonText = data.candidates[0].content.parts[0].text;
+                // Basic cleanup of markdown blocks
+                jsonText = jsonText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const modelData = JSON.parse(jsonText);
+                
+                renderModelCards(modelData);
+            } catch (err) {
+                console.error("Model call failed, using fallback:", err);
+                document.getElementById('offlineNoteModels').classList.remove('hidden');
+                renderModelCards(getFallbackModels(problemType));
+            } finally {
+                modelCallLoading = false;
+                document.getElementById('modelLoading').classList.add('hidden');
+                document.getElementById('modelGrid').classList.remove('hidden');
+            }
+        }
+
+        function getFallbackModels(type) {
+            if (type === 'regression') {
+                return [
+                    {name:"Random Forest Regressor", accuracy_range:"R²: 0.82-0.91", pros:["Handles nonlinear patterns","Robust to outliers"], cons:["Less interpretable"], best_for:"General regression tasks"},
+                    {name:"Ridge Regression", accuracy_range:"R²: 0.74-0.85", pros:["Fast","Handles multicollinearity"], cons:["Only linear relationships"], best_for:"When features are correlated"},
+                    {name:"Gradient Boosting", accuracy_range:"R²: 0.84-0.93", pros:["High accuracy","Feature importance built-in"], cons:["Slower to train"], best_for:"Complex regression problems"}
+                ];
+            }
+            return [
+                {name:"Random Forest", accuracy_range:"88%-94%", pros:["Handles mixed data types","No feature scaling needed"], cons:["Slower on very large datasets"], best_for:"General purpose classification"},
+                {name:"XGBoost", accuracy_range:"89%-95%", pros:["Very high accuracy","Handles class imbalance"], cons:["Requires hyperparameter tuning"], best_for:"Structured tabular datasets"},
+                {name:"Logistic Regression", accuracy_range:"79%-87%", pros:["Fast training","Highly interpretable"], cons:["Assumes linear decision boundary"], best_for:"Quick baseline model"}
+            ];
+        }
+
+        function renderModelCards(models) {
+            const grid = document.getElementById('modelGrid');
+            grid.innerHTML = models.map((m, idx) => {
+                const acc = parseInt(m.accuracy_range.match(/\d+/)) || 85;
+                return `
+                    <div id="modelCard_${idx}" class="glass border border-white/5 rounded-2xl p-6 flex flex-col h-full relative group transition-all">
+                        ${idx === 0 ? '<div class="absolute -top-3 left-6 px-3 py-1 bg-primary text-white text-[10px] font-bold rounded-full shadow-lg z-10">✦ BEST FIT</div>' : ''}
+                        
+                        <div class="mb-4">
+                            <h3 class="font-bold text-xl mb-1">${m.name}</h3>
+                            <div class="text-xs text-gray-400">Estimated Accuracy: ${m.accuracy_range}</div>
+                        </div>
+
+                        <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-6">
+                            <div class="h-full bg-primary" style="width: ${acc}%"></div>
+                        </div>
+
+                        <div class="space-y-4 flex-grow">
+                            <div class="space-y-2">
+                                ${m.pros.map(p => `<div class="flex items-start gap-2 text-xs text-gray-300">
+                                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5"></i>
+                                    <span>${p}</span>
+                                </div>`).join('')}
+                            </div>
+                            <div class="space-y-2 pb-6">
+                                ${m.cons.map(c => `<div class="flex items-start gap-2 text-xs text-gray-500">
+                                    <i data-lucide="x-circle" class="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5"></i>
+                                    <span>${c}</span>
+                                </div>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="border-t border-white/5 pt-4 mt-auto">
+                            <p class="italic text-gray-400 text-[10px] mb-4">${m.best_for}</p>
+                            <button onclick="selectModel('${m.name}', ${idx})" id="btnSelect_${idx}" class="w-full py-2 bg-white/5 hover:bg-primary hover:text-white border border-white/10 rounded-xl text-xs font-bold transition-all">
+                                Select This Model
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Restore if exists
+            const savedModel = localStorage.getItem('dm_selected_model');
+            if (savedModel) {
+                const idx = models.findIndex(m => m.name === savedModel);
+                if (idx !== -1) selectModel(savedModel, idx);
+            }
+
+            lucide.createIcons();
+        }
+
+        function selectModel(name, idx) {
+            selectedModel = name;
+            document.querySelectorAll('#modelGrid > div').forEach(d => d.classList.remove('border-primary', 'border-2'));
+            document.getElementById(`modelCard_${idx}`).classList.add('border-primary', 'border-2');
+            
+            document.getElementById('btnNext2').disabled = false;
+        }
+
+        // --- Step 3 Logic ---
+        function loadStep3() {
+            selectedModel = localStorage.getItem('dm_selected_model') || "Random Forest";
+            document.getElementById('step3ModelLabel').innerText = selectedModel;
+            
+            generateSimulatedResults();
+            generateFeatureImportance();
+            generateCode();
+        }
+
+        function generateSimulatedResults() {
+            const type = localStorage.getItem('dm_problem_type');
+            const rowCount = parseInt(localStorage.getItem('dm_rowcount') || '1000');
+            
+            let baseAcc = 87;
+            if (selectedModel.includes('XGBoost') || selectedModel.includes('Gradient')) baseAcc = 93;
+            else if (selectedModel.includes('Random Forest')) baseAcc = 91;
+            else if (selectedModel.includes('Logistic') || selectedModel.includes('Ridge')) baseAcc = 84;
+
+            const accuracy = baseAcc + Math.floor(Math.random() * 5) - 2;
+            const precision = accuracy - Math.floor(Math.random() * 3) - 2;
+            const recall = accuracy - Math.floor(Math.random() * 4) - 3;
+            const f1 = Math.round((precision + recall) / 2);
+
+            const metrics = [
+                { label: 'Accuracy', value: accuracy, color: 'text-primary' },
+                { label: 'Precision', value: precision, color: 'text-accent' },
+                { label: 'Recall', value: recall, color: 'text-secondary' },
+                { label: 'F1 Score', value: f1, color: 'text-green-400' }
+            ];
+
+            document.getElementById('metricsRow').innerHTML = metrics.map(m => `
+                <div class="chart-container text-center">
+                    <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1">${m.label}</div>
+                    <div class="text-4xl font-bold ${m.color}">${m.value}%</div>
+                </div>
+            `).join('');
+
+            const performanceContainer = document.getElementById('performanceContainer');
+            const title = document.getElementById('step3LeftPanelTitle');
+
+            if (type === 'regression') {
+                title.innerText = "Regression Error Metrics";
+                performanceContainer.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass p-6 rounded-2xl border border-white/5 text-center">
+                            <div class="text-[10px] text-gray-500 font-bold mb-2">MAE</div>
+                            <div class="text-2xl font-bold">1.24</div>
+                        </div>
+                        <div class="glass p-6 rounded-2xl border border-white/5 text-center">
+                            <div class="text-[10px] text-gray-500 font-bold mb-2">RMSE</div>
+                            <div class="text-2xl font-bold">2.18</div>
+                        </div>
+                    </div>
+                    <div class="glass p-4 rounded-xl border border-white/5">
+                        <div class="text-[10px] text-gray-400 font-bold mb-3 uppercase">Error Distribution</div>
+                        <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden flex">
+                            <div class="h-full bg-green-500" style="width: 70%"></div>
+                            <div class="h-full bg-yellow-500" style="width: 20%"></div>
+                            <div class="h-full bg-red-500" style="width: 10%"></div>
+                        </div>
+                        <div class="flex justify-between text-[8px] text-gray-500 mt-2 font-bold">
+                            <span>MINIMAL ERROR</span>
+                            <span>HIGH DEVIATION</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                title.innerText = "Classification Confusion Matrix";
+                const testSize = Math.round(rowCount * 0.2);
+                const tn = Math.round(testSize * (accuracy / 100) * 0.65);
+                const tp = Math.round(testSize * (accuracy / 100) * 0.35);
+                const fp = Math.round(testSize * (1 - accuracy / 100) * 0.6);
+                const fn = testSize - tn - tp - fp;
+
+                performanceContainer.innerHTML = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="confusion-matrix-cell bg-green-500/10 border border-green-500/20">
+                            <div class="text-2xl font-bold text-green-500">${tn}</div>
+                            <div class="text-[8px] font-bold text-gray-400 uppercase mt-1">True Negative</div>
+                        </div>
+                        <div class="confusion-matrix-cell bg-red-500/10 border border-red-500/20">
+                            <div class="text-2xl font-bold text-red-500">${fp}</div>
+                            <div class="text-[8px] font-bold text-gray-400 uppercase mt-1">False Positive</div>
+                        </div>
+                        <div class="confusion-matrix-cell bg-red-500/10 border border-red-500/20">
+                            <div class="text-2xl font-bold text-red-500">${fn}</div>
+                            <div class="text-[8px] font-bold text-gray-400 uppercase mt-1">False Negative</div>
+                        </div>
+                        <div class="confusion-matrix-cell bg-green-500/10 border border-green-500/20">
+                            <div class="text-2xl font-bold text-green-500">${tp}</div>
+                            <div class="text-[8px] font-bold text-gray-400 uppercase mt-1">True Positive</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function generateFeatureImportance() {
+            const target = localStorage.getItem('dm_target_column');
+            const filteredCols = columns.filter(c => c !== target);
+            
+            // Safe Chart.js Rendering
+            if (importanceChart) {
+                importanceChart.destroy();
+                importanceChart = null;
+            }
+
+            const dataPoints = [];
+            let remaining = 1.0;
+            for (let i = 0; i < filteredCols.length - 1; i++) {
+                const val = Math.round((remaining * (0.3 + Math.random() * 0.4)) * 100) / 100;
+                dataPoints.push({ col: filteredCols[i], val: val });
+                remaining -= val;
+            }
+            dataPoints.push({ col: filteredCols[filteredCols.length-1], val: Math.max(0, Math.round(remaining * 100) / 100) });
+            
+            dataPoints.sort((a,b) => b.val - a.val);
+
+            const ctx = document.getElementById('importanceChart').getContext('2d');
+            importanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dataPoints.map(d => d.col),
+                    datasets: [{
+                        data: dataPoints.map(d => d.val),
+                        backgroundColor: 'rgba(139, 92, 246, 0.6)',
+                        borderColor: '#8B5CF6',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { min: 0, max: 1, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        async function generateCode() {
+            const target = localStorage.getItem('dm_target_column');
+            const model = localStorage.getItem('dm_selected_model');
+            const features = columns.filter(c => c !== target);
+
+            document.getElementById('codeLoading').classList.remove('hidden');
+            document.getElementById('offlineNoteCode').classList.add('hidden');
+
+            if (codeCallLoading) return;
+            codeCallLoading = true;
+
+            const prompt = `Python sklearn code for ${model} predicting ${target} from: ${features.join(', ')}. Include: imports, pd.read_csv('dataset.csv'), fillna median/mode, X/y split, train_test_split 80/20 rs=42, fit, predict, accuracy_score, classification_report. Comments on each block. Under 35 lines total.`;
+
+            try {
+                const url = `${CONFIG.geminiEndpoint}${CONFIG.geminiModel}:generateContent?key=${CONFIG.geminiApiKey}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { maxOutputTokens: CONFIG.maxTokens }
+                    })
+                });
+
+                if (!response.ok) throw new Error('API request failed');
+
+                const data = await response.json();
+                let code = data.candidates[0].content.parts[0].text;
+                // Cleanup markdown code blocks
+                code = code.replace(/```python/g, '').replace(/```/g, '').trim();
+                
+                rawCodeText = code;
+                renderHighlightedCode(code);
+            } catch (err) {
+                console.error("Code generation failed:", err);
+                document.getElementById('offlineNoteCode').classList.remove('hidden');
+                
+                // Fallback template
+                const fallback = `# ${model} — Generated by DataMind AI
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.impute import SimpleImputer
+
+# Load dataset
+df = pd.read_csv('dataset.csv')
+
+# Features and target
+X = df[${JSON.stringify(features)}]
+y = df['${target}']
+
+# Handle missing values
+imputer = SimpleImputer(strategy='median')
+X = pd.DataFrame(imputer.fit_transform(X), columns=X.columns)
+
+# Train-test split
+X_train,X_test,y_train,y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Evaluate
+y_pred = model.predict(X_test)
+print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+print(classification_report(y_test, y_pred))`;
+
+                rawCodeText = fallback;
+                renderHighlightedCode(fallback);
+            } finally {
+                codeCallLoading = false;
+                document.getElementById('codeLoading').classList.add('hidden');
+            }
+        }
+
+        function renderHighlightedCode(code) {
+            const keywords = ['import', 'from', 'def', 'if', 'for', 'in', 'return', 'print', 'as', 'with', 'class', 'elif', 'else', 'try', 'except', 'finally', 'while', 'import', 'from'];
+            
+            let highlighted = escapeHtml(code);
+
+            // Comments
+            highlighted = highlighted.replace(/(#.*)/g, '<span class="comment">$1</span>');
+            
+            // Strings
+            highlighted = highlighted.replace(/(\'.*?\')/g, '<span class="string">$1</span>');
+            highlighted = highlighted.replace(/(\".*?\")/g, '<span class="string">$1</span>');
+
+            // Keywords
+            keywords.forEach(kw => {
+                const reg = new RegExp(`\\b${kw}\\b`, 'g');
+                highlighted = highlighted.replace(reg, `<span class="keyword">${kw}</span>`);
+            });
+
+            // Function calls
+            highlighted = highlighted.replace(/(\w+)\(/g, '<span class="function">$1</span>(');
+
+            // Numbers
+            highlighted = highlighted.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+
+            document.getElementById('codeDisplay').innerHTML = highlighted;
+        }
+
+        // --- Utilities ---
+        function copyCode() {
+            const btn = document.getElementById('btnCopy');
+            setLoading(btn, true, 'Copying...');
+            navigator.clipboard.writeText(rawCodeText);
+            setTimeout(() => {
+                setLoading(btn, false);
+                const span = btn.querySelector('span');
+                if (span) span.innerText = "Copied!";
+                setTimeout(() => { if(span) span.innerText = "Copy Code" }, 2000);
+            }, 400);
+        }
+
+        function downloadCode() {
+            const blob = new Blob([rawCodeText], { type: "text/x-python" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            const filename = localStorage.getItem('dm_filename') || 'dataset.csv';
+            const baseName = filename.replace(/\.[^/.]+$/, "");
+            a.download = `${baseName}_model.py`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function handleNewProject() {
+            showConfirm(
+                "New Project",
+                "Are you sure you want to start over? All your current data and model progress will be cleared.",
+                () => clearProject()
+            );
+        }
+
+        function clearProject() {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith('dm_')) localStorage.removeItem(key);
+            });
+            window.location.href = 'upload.html';
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function setLoading(el, loading, text = "") {
+            if (!el) return;
+            const originalText = el.getAttribute('data-original-text') || el.innerText;
+            if (loading) {
+                if (!el.getAttribute('data-original-text')) el.setAttribute('data-original-text', originalText);
+                el.disabled = true;
+                el.innerHTML = `<div class="flex items-center justify-center gap-2">
+                    <div class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                    <span>${text || 'Loading...'}</span>
+                </div>`;
+            } else {
+                el.disabled = false;
+                el.innerText = originalText;
+            }
+        }
+
+        init();
+    </script>
+    <!-- Firebase Auth Guard -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Update User Identity
+                const storedName = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+                if (storedName) {
+                    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = storedName);
+                    document.querySelectorAll('.user-avatar-display').forEach(el => {
+                        el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedName)}&background=random`;
+                    });
+                }
+            }
+        });
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        
+        const handleLogout = async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            localStorage.removeItem('dm_user_email');
+            localStorage.removeItem('dm_user_name');
+            window.location.href = 'index.html';
+        };
+
+        if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+        if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+
+        // Dropdown Toggle Logic
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (menuToggle) {
+          menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+          });
+          overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+          });
+        }
+    </script>
+    </script>
+<script>
+(function(){
+  var btn=document.getElementById('hamburgerBtn');
+  var sidebar=document.querySelector('.sidebar');
+  var h1=document.getElementById('hb1');
+  var h2=document.getElementById('hb2');
+  var h3=document.getElementById('hb3');
+  if(!btn||!sidebar)return;
+  sidebar.style.transition='margin-left 0.3s ease';
+  var open=localStorage.getItem('dm_sidebar_open')!=='false';
+  function applyState(isOpen,animate){
+    if(!animate)sidebar.style.transition='none';
+    sidebar.style.marginLeft=isOpen?'0px':'-260px';
+    if(!animate)setTimeout(function(){sidebar.style.transition='margin-left 0.3s ease';},50);
+    if(isOpen){h1.style.transform='none';h2.style.opacity='1';h2.style.transform='none';h3.style.transform='none';}
+    else{h1.style.transform='translateY(7px) rotate(45deg)';h2.style.opacity='0';h2.style.transform='scaleX(0)';h3.style.transform='translateY(-7px) rotate(-45deg)';}
+  }
+  applyState(open,false);
+  btn.addEventListener('click',function(){open=!open;localStorage.setItem('dm_sidebar_open',open?'true':'false');applyState(open,true);});
+})();
+</script></body>
+</html>

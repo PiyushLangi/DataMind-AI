@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — Target Column</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Project Config -->
+    <script src="config.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </div>
+
+            <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+              <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+              <a href="upload.html" class="nav-link">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+              <a href="preprocessing.html" class="nav-link">
+                <i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+              <a href="target.html" class="nav-link active">
+                <i data-lucide="target" class="w-5 h-5"></i> Target Column</a>
+                
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+              <a href="visualization.html" class="nav-link">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+              <a href="chatbot.html" class="nav-link">
+                <i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+              <a href="report.html" class="nav-link">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+              <a href="ml-model.html" class="nav-link">
+                <i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+              <a href="contact.html" class="nav-link">
+                <i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+            </nav>
+
+            <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+                <a href="#" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+                <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content flex flex-col relative bg-dark/50">
+            <!-- Top Navbar -->
+            <header class="sticky top-0 z-30 glass border-b border-white/5 py-4 px-8 flex justify-between items-center">
+                <button id="menuToggle" class="md:hidden p-2 text-gray-400 hover:text-white mr-4">
+                  <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary">
+                        <i data-lucide="target" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold font-['Outfit'] leading-none">Target Selection</h1>
+                        <p class="text-[10px] text-gray-400 mt-1">Select the value you want to predict</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-6">
+                    <div id="datasetBadge" class="px-3 py-1 bg-green-500/10 text-green-500 text-[10px] font-bold rounded-full border border-green-500/20 uppercase tracking-wider">
+                        Dataset: Loading...
+                    </div>
+                    
+                    <div class="relative">
+                        <div id="profileDropdownBtn" class="flex items-center gap-3 pl-6 border-l border-white/5 group cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-gradient-primary p-[2px]">
+                                <img src="https://ui-avatars.com/api/?name=User&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile">
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 ml-1"></i>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                            <div class="px-4 py-3 border-b border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p>
+                                <p class="text-xs font-medium truncate user-name-display">User</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                                </a>
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                                </a>
+                            </div>
+                            <div class="h-px bg-white/5 my-1"></div>
+                            <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 transition-colors text-left">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+
+
+            <div class="flex-grow p-8 overflow-y-auto custom-scrollbar">
+                <div class="max-w-4xl mx-auto space-y-8">
+                    <div class="text-center space-y-2">
+                        <h2 class="text-3xl font-bold font-['Outfit']">Identify your target</h2>
+                        <p class="text-gray-400">Choose the column that the model should learn to predict.</p>
+                    </div>
+
+                    <div id="columnGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Columns will be injected here -->
+                    </div>
+
+                    <div class="flex justify-center pt-8">
+                        <button id="confirmTargetBtn" disabled class="px-12 py-4 bg-gradient-primary rounded-2xl font-bold shadow-xl shadow-primary/20 opacity-50 cursor-not-allowed transition-all hover:scale-105 active:scale-95">
+                            Continue to Model Building
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let selectedTarget = localStorage.getItem('dm_target_column') || null;
+        const columns = getColumns();
+        const dataset = getDataset();
+
+        function init() {
+            if (!hasDataset()) {
+                window.location.href = 'upload.html';
+                return;
+            }
+
+            const meta = getMeta();
+            document.getElementById('datasetBadge').innerText = `Dataset: ${meta.filename}`;
+
+            renderColumns();
+            lucide.createIcons();
+        }
+
+        function renderColumns() {
+            const grid = document.getElementById('columnGrid');
+            grid.innerHTML = columns.map(col => {
+                const type = detectColumnType(col, dataset);
+                const isSelected = selectedTarget === col;
+                
+                return `
+                    <div onclick="selectTarget('${col}')" class="glass p-6 rounded-2xl border ${isSelected ? 'border-primary bg-primary/5 shadow-lg shadow-primary/10' : 'border-white/5 hover:border-white/20'} cursor-pointer transition-all group">
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="px-2 py-1 bg-white/5 text-[10px] font-bold rounded-full uppercase tracking-widest text-gray-500">${type}</span>
+                            ${isSelected ? '<i data-lucide="check-circle-2" class="w-5 h-5 text-primary"></i>' : '<div class="w-5 h-5 rounded-full border-2 border-white/10 group-hover:border-primary/50 transition-colors"></div>'}
+                        </div>
+                        <h3 class="font-bold text-lg truncate">${col}</h3>
+                    </div>
+                `;
+            }).join('');
+            
+            const btn = document.getElementById('confirmTargetBtn');
+            if (selectedTarget) {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+            
+            lucide.createIcons();
+        }
+
+        function selectTarget(col) {
+            selectedTarget = col;
+            localStorage.setItem('dm_target_column', col);
+            
+            // Auto-detect problem type
+            const type = detectColumnType(col, dataset);
+            let problemType = 'classification';
+            if (type === 'numeric' && new Set(dataset.map(r => r[col])).size > 20) {
+                problemType = 'regression';
+            }
+            localStorage.setItem('dm_problem_type', problemType);
+            
+            renderColumns();
+        }
+
+        document.getElementById('confirmTargetBtn').onclick = () => {
+            if (!selectedTarget) return;
+            window.location.href = 'ml-model.html';
+        };
+
+        window.onload = init;
+    </script>
+
+    <!-- Firebase Auth Guard -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                const name = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+                document.querySelectorAll('.user-name-display').forEach(el => el.textContent = name);
+                document.querySelectorAll('.user-avatar-display').forEach(el => {
+                    el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+                });
+            }
+        });
+
+        const handleLogout = async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            localStorage.removeItem('dm_user_email');
+            localStorage.removeItem('dm_user_name');
+            window.location.href = 'index.html';
+        };
+
+        document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+        document.getElementById('dropdownLogoutBtn').addEventListener('click', handleLogout);
+
+        // Sidebar Toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (menuToggle) {
+          menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+          });
+          overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+          });
+        }
+        
+        // Profile Dropdown
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+            document.addEventListener('click', () => profileDropdown.classList.add('hidden'));
+        }
+    </script>
+</body>
+</html>

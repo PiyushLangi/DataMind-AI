@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — Contact</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- EmailJS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Project Config -->
+    <script src="config.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </div>
+
+            <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+              <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+              <a href="upload.html" class="nav-link">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+              <a href="preprocessing.html" class="nav-link">
+                <i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+                
+                
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+              <a href="visualization.html" class="nav-link">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+              <a href="chatbot.html" class="nav-link">
+                <i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+              <a href="report.html" class="nav-link">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+              <a href="ml-model.html" class="nav-link">
+                <i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+              <a href="contact.html" class="nav-link active">
+                <i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+            </nav>
+
+            <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+                <a href="#" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+                <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content relative bg-dark/50 flex flex-col h-screen overflow-y-auto custom-scrollbar">
+            <!-- Header -->
+            <header class="sticky top-0 z-30 glass border-b border-white/5 py-4 px-8 flex justify-between items-center">
+                
+                <div class="flex items-center gap-4"><button id="hamburgerBtn" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:34px;height:34px;background:transparent;border:none;cursor:pointer;flex-shrink:0;border-radius:8px;padding:4px;margin-right:4px;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'"><span id="hb1" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb2" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb3" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span></button>
+                    <div class="p-2 bg-primary/10 rounded-lg">
+                        <i data-lucide="mail" class="w-5 h-5 text-primary"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold font-['Outfit']">Contact Support</h1>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Connect / Get in touch with AI experts</p>
+                    </div>
+                </div>
+                
+                    <div class="relative">
+                        <div id="profileDropdownBtn" class="flex items-center gap-3 pl-6 border-l border-white/5 group cursor-pointer">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-sm font-bold user-name-display">John Doe</div>
+                                <div class="text-[10px] text-gray-500">Administrator</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-primary p-[2px]">
+                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile">
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 ml-1"></i>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                            <div class="px-4 py-3 border-b border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p>
+                                <p class="text-xs font-medium truncate user-name-display">John Doe</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                                </a>
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                                </a>
+                            </div>
+                            <div class="h-px bg-white/5 my-1"></div>
+                            <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 transition-colors text-left">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+            </header>
+
+            <!-- Contact Content -->
+            <div class="p-8 max-w-6xl mx-auto grid grid-cols-12 gap-8 items-start animate-fade-in">
+                <!-- Left: Contact Form -->
+                <div class="col-span-12 lg:col-span-7 glass p-10 rounded-[2.5rem] border border-white/5 space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold font-['Outfit'] mb-2">Send us a message</h2>
+                        <p class="text-gray-400">Have questions about DataMind AI? Our team of experts is here to help you.</p>
+                    </div>
+
+                    <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Full Name</label>
+                                <input type="text" required placeholder="John Doe" class="input-field w-full p-4 rounded-xl">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Email Address</label>
+                                <input type="email" required placeholder="john@example.com" class="input-field w-full p-4 rounded-xl">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Subject</label>
+                            <select class="input-field w-full p-4 rounded-xl appearance-none">
+                                <option>Technical Support</option>
+                                <option>Billing & Subscription</option>
+                                <option>Feature Request</option>
+                                <option>Partnership Inquiry</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Message</label>
+                            <textarea rows="5" required placeholder="How can we help you today?" class="input-field w-full p-4 rounded-xl resize-none"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 text-lg shadow-xl" id="submitBtn">
+                            <i data-lucide="send" class="w-5 h-5"></i> Send Message
+                        </button>
+                    </form>
+
+                    <div id="successMessage" class="hidden glass p-6 rounded-2xl border border-green-500/20 bg-green-500/5 text-center animate-slide-up">
+                        <div class="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="check" class="w-6 h-6 text-green-500"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-1">Message Sent!</h3>
+                        <p class="text-xs text-gray-400">We've received your inquiry and will get back to you within 24 hours.</p>
+                    </div>
+                </div>
+
+                <!-- Right: Contact Info & Socials -->
+                <div class="col-span-12 lg:col-span-5 space-y-8">
+                    <!-- Contact Info -->
+                    <div class="glass p-8 rounded-[2rem] border border-white/5 space-y-6">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Contact Information</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-4 group">
+                                <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <i data-lucide="mail" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Email Us</div>
+                                    <div class="text-sm font-bold">support@datamind.ai</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 group">
+                                <div class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
+                                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Our Office</div>
+                                    <div class="text-sm font-bold">San Francisco, CA 94105</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 group">
+                                <div class="w-10 h-10 bg-accent/10 rounded-xl flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+                                    <i data-lucide="phone" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Call Us</div>
+                                    <div class="text-sm font-bold">+1 (555) 000-0000</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div class="glass p-8 rounded-[2rem] border border-white/5 space-y-6">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Connect Socially</h3>
+                        <div class="flex gap-4">
+                            <a href="#" class="w-14 h-14 glass border border-white/10 rounded-2xl flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 transition-all hover:-translate-y-2 group">
+                                <i data-lucide="linkedin" class="w-6 h-6 text-gray-400 group-hover:text-white"></i>
+                            </a>
+                            <a href="#" class="w-14 h-14 glass border border-white/10 rounded-2xl flex items-center justify-center hover:bg-white/10 hover:border-white/30 transition-all hover:-translate-y-2 group">
+                                <i data-lucide="github" class="w-6 h-6 text-gray-400 group-hover:text-white"></i>
+                            </a>
+                            <a href="#" class="w-14 h-14 glass border border-white/10 rounded-2xl flex items-center justify-center hover:bg-secondary/20 hover:border-secondary/50 transition-all hover:-translate-y-2 group">
+                                <i data-lucide="twitter" class="w-6 h-6 text-gray-400 group-hover:text-white"></i>
+                            </a>
+                            <a href="#" class="w-14 h-14 glass border border-white/10 rounded-2xl flex items-center justify-center hover:bg-accent/20 hover:border-accent/50 transition-all hover:-translate-y-2 group">
+                                <i data-lucide="instagram" class="w-6 h-6 text-gray-400 group-hover:text-white"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Map Section -->
+                    <div class="glass p-4 rounded-[2rem] border border-white/5 relative overflow-hidden h-64 group cursor-crosshair">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=2074&auto=format&fit=crop')] bg-cover bg-center grayscale opacity-30 group-hover:scale-110 transition-transform duration-1000"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-dark via-transparent to-transparent"></div>
+                        
+                        <div class="relative z-10 h-full flex flex-col justify-end p-4">
+                            <div class="p-2 bg-primary/20 backdrop-blur-md rounded-lg w-fit border border-primary/30 mb-2">
+                                <i data-lucide="navigation" class="w-4 h-4 text-primary"></i>
+                            </div>
+                            <h4 class="font-bold text-sm">Global DataMind HQ</h4>
+                            <p class="text-[10px] text-gray-500">Live Satellite Feed Active</p>
+                        </div>
+
+                        <!-- Pulse Radar Animation -->
+                        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                            <div class="w-4 h-4 bg-primary rounded-full relative">
+                                <div class="absolute inset-0 bg-primary rounded-full animate-ping opacity-75"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripting -->
+    <script>
+        lucide.createIcons();
+
+        // STEP 1: Sign up free at emailjs.com
+        // STEP 2: Create email template  
+        // STEP 3: Replace these values:
+        const EMAILJS_SERVICE_ID = "YOUR_SERVICE_ID";
+        const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID";
+        const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY";
+        
+        if (typeof emailjs !== 'undefined') {
+            emailjs.init(EMAILJS_PUBLIC_KEY);
+        }
+
+        function showToast(message, type = 'success') {
+            // Placeholder for toast notification logic
+            console.log(`${type.toUpperCase()}: ${message}`);
+        }
+
+        function setLoading(btn, isLoading, text = 'Processing...') {
+            btn.disabled = isLoading;
+            btn.innerHTML = isLoading 
+                ? `<i data-lucide="loader" class="w-5 h-5 animate-spin"></i> ${text}` 
+                : `<i data-lucide="send" class="w-5 h-5"></i> Send Message`;
+            lucide.createIcons();
+        }
+
+        async function handleContactSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            setLoading(btn, true, 'Sending...');
+            
+            try {
+                if (EMAILJS_SERVICE_ID === "YOUR_SERVICE_ID") {
+                    // Simulate success if keys aren't set yet
+                    await new Promise(r => setTimeout(r, 1500));
+                } else {
+                    await emailjs.sendForm(
+                        EMAILJS_SERVICE_ID, 
+                        EMAILJS_TEMPLATE_ID, 
+                        e.target
+                    );
+                }
+                
+                e.target.classList.add('hidden');
+                document.getElementById('successMessage').classList.remove('hidden');
+                showToast('Message sent successfully!', 'success');
+            } catch (err) {
+                console.error('EmailJS Error:', err);
+                showToast('Failed to send. Please try again.', 'error');
+                setLoading(btn, false);
+            }
+        }
+    </script>
+    <!-- Firebase Auth Guard -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Update User Identity
+                const storedName = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+                if (storedName) {
+                    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = storedName);
+                    document.querySelectorAll('.user-avatar-display').forEach(el => {
+                        el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedName)}&background=random`;
+                    });
+                }
+            }
+        });
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        
+        const handleLogout = async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            localStorage.removeItem('dm_user_email');
+            localStorage.removeItem('dm_user_name');
+            window.location.href = 'index.html';
+        };
+
+        if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+        if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+
+        // Dropdown Toggle Logic
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (menuToggle) {
+          menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+          });
+          overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+          });
+        }
+    </script>
+    </script>
+<script>
+(function(){
+  var btn=document.getElementById('hamburgerBtn');
+  var sidebar=document.querySelector('.sidebar');
+  var h1=document.getElementById('hb1');
+  var h2=document.getElementById('hb2');
+  var h3=document.getElementById('hb3');
+  if(!btn||!sidebar)return;
+  sidebar.style.transition='margin-left 0.3s ease';
+  var open=localStorage.getItem('dm_sidebar_open')!=='false';
+  function applyState(isOpen,animate){
+    if(!animate)sidebar.style.transition='none';
+    sidebar.style.marginLeft=isOpen?'0px':'-260px';
+    if(!animate)setTimeout(function(){sidebar.style.transition='margin-left 0.3s ease';},50);
+    if(isOpen){h1.style.transform='none';h2.style.opacity='1';h2.style.transform='none';h3.style.transform='none';}
+    else{h1.style.transform='translateY(7px) rotate(45deg)';h2.style.opacity='0';h2.style.transform='scaleX(0)';h3.style.transform='translateY(-7px) rotate(-45deg)';}
+  }
+  applyState(open,false);
+  btn.addEventListener('click',function(){open=!open;localStorage.setItem('dm_sidebar_open',open?'true':'false');applyState(open,true);});
+})();
+</script></body>
+</html>

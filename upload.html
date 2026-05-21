@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — Upload Dataset</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Project Config -->
+    <script src="config.js"></script>
+    <!-- PapaParse & SheetJS CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </div>
+
+
+
+            <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+              <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+              <a href="upload.html" class="nav-link active">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+              <a href="preprocessing.html" class="nav-link">
+                <i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+                
+                
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+              <a href="visualization.html" class="nav-link">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+              <a href="chatbot.html" class="nav-link">
+                <i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+              <a href="report.html" class="nav-link">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+              <a href="ml-model.html" class="nav-link">
+                <i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+              <a href="contact.html" class="nav-link">
+                <i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+            </nav>
+
+            <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+                <a href="#" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+                <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content relative bg-dark/50">
+            <!-- Top Navbar -->
+            <header class="sticky top-0 z-30 glass border-b border-white/5 py-4 px-8 flex justify-between items-center">
+                
+                <h1 class="text-xl font-bold font-['Outfit']">Upload Dataset</h1>
+                
+                <div class="flex items-center gap-6"><button id="hamburgerBtn" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:34px;height:34px;background:transparent;border:none;cursor:pointer;flex-shrink:0;border-radius:8px;padding:4px;margin-right:4px;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'"><span id="hb1" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb2" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb3" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span></button>
+                    <div class="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
+                        <span class="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                        <span class="text-xs font-semibold text-primary">AI Engine Online</span>
+                    </div>
+                    
+                    <button class="relative p-2 text-gray-400 hover:text-white transition-colors">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    
+                    <div class="relative">
+                        <div id="profileDropdownBtn" class="flex items-center gap-3 pl-6 border-l border-white/5 group cursor-pointer">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-sm font-bold user-name-display">John Doe</div>
+                                <div class="text-[10px] text-gray-500">Pro Plan</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-gradient-primary p-[2px]">
+                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile">
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 ml-1"></i>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                            <div class="px-4 py-3 border-b border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p>
+                                <p class="text-xs font-medium truncate user-name-display">John Doe</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                                </a>
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                                </a>
+                            </div>
+                            <div class="h-px bg-white/5 my-1"></div>
+                            <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 transition-colors text-left">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="p-8 max-w-6xl mx-auto space-y-8 overflow-y-auto" style="max-height:calc(100vh - 73px)">
+
+                <!-- Mode Selector -->
+                <div class="flex gap-3 p-1.5 bg-white/5 border border-white/5 rounded-2xl w-fit">
+                    <button id="btnModeSingle" onclick="switchMode('single')"
+                        class="px-6 py-3 rounded-xl text-sm font-bold transition-all bg-primary text-white shadow-lg shadow-primary/20">
+                        📄 Single Dataset
+                    </button>
+                    <button id="btnModeMulti" onclick="switchMode('multiple')"
+                        class="px-6 py-3 rounded-xl text-sm font-bold transition-all bg-white/5 border border-white/10 text-gray-400 hover:text-white">
+                        📂 Multiple Datasets
+                    </button>
+                </div>
+
+                <!-- Upload Section -->
+                <div id="uploadSection" class="space-y-6">
+                    <div class="glass p-12 rounded-[2rem] border border-white/5 text-center upload-zone group cursor-pointer" id="dropZone">
+                        <input type="file" id="fileInput" class="hidden" accept=".csv, .xlsx, .xls">
+                        <div class="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 text-primary"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2 font-['Outfit']">Drag & drop your dataset</h2>
+                        <p class="text-gray-400 mb-8 max-w-sm mx-auto">Support for CSV and Excel files. Max file size: 500MB.</p>
+                        <button class="btn-primary px-8 py-3 rounded-xl font-bold inline-flex items-center gap-2" onclick="document.getElementById('fileInput').click()">
+                            Browse Files
+                        </button>
+                    </div>
+
+                    <!-- Progress Bar (Hidden by default) -->
+                    <div id="progressContainer" class="hidden glass p-6 rounded-2xl border border-white/5 space-y-4">
+                        <div class="flex justify-between items-center text-sm">
+                            <span id="fileName" class="font-medium">dataset_analysis.csv</span>
+                            <span id="progressText" class="text-primary font-bold">45%</span>
+                        </div>
+                        <div class="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div id="progressBar" class="h-full bg-gradient-primary w-0 transition-all duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multi Upload Section (Hidden by default) -->
+                <div id="multiUploadSection" class="hidden space-y-6 animate-fade-in">
+                    <div id="multiCardsRow" class="flex flex-wrap gap-6">
+                        <!-- Cards injected by JS -->
+                    </div>
+
+                    <div class="text-center">
+                        <button id="btnAddThird" onclick="addThirdDataset()"
+                            class="text-primary text-sm hover:underline cursor-pointer font-bold">+ Add Third Dataset</button>
+                    </div>
+
+                    <div class="text-center space-y-3 pt-4 pb-8">
+                        <div id="multiReadyText" class="text-sm text-gray-500">0 of 2 datasets ready</div>
+                        <button id="btnMultiContinue" onclick="multiContinue()" disabled
+                            class="px-10 py-4 bg-gradient-primary rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                            Continue to Analysis →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Section (Hidden by default) -->
+                <div id="previewSection" class="hidden space-y-8 animate-fade-in">
+                    <!-- Dataset Stats -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div class="stat-card">
+                            <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Total Rows</div>
+                            <div class="text-2xl font-bold text-gradient" id="rowCount">12,450</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Columns</div>
+                            <div class="text-2xl font-bold text-gradient" id="colCount">24</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">Missing Values</div>
+                            <div class="text-2xl font-bold text-red-400" id="missingValues">124</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="text-xs text-gray-500 uppercase tracking-widest mb-1">File Size</div>
+                            <div class="text-2xl font-bold text-gradient" id="fileSize">4.2 MB</div>
+                        </div>
+                    </div>
+
+                    <!-- Table Preview -->
+                    <div class="glass rounded-2xl border border-white/5 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <h3 class="font-bold font-['Outfit']">Dataset Preview (Top 5 Rows)</h3>
+                            <div class="flex gap-2">
+                                <button class="p-2 hover:bg-white/5 rounded-lg transition-colors"><i data-lucide="filter" class="w-4 h-4"></i></button>
+                                <button class="p-2 hover:bg-white/5 rounded-lg transition-colors"><i data-lucide="download" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        <div class="data-table-container">
+                            <table class="data-table">
+                                <thead id="tableHead">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Customer Name</th>
+                                        <th>Revenue</th>
+                                        <th>Status</th>
+                                        <th>Region</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    <tr>
+                                        <td>#1001</td>
+                                        <td>Acme Corp</td>
+                                        <td>$12,500</td>
+                                        <td><span class="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold uppercase tracking-wider">Active</span></td>
+                                        <td>North America</td>
+                                        <td>2024-05-01</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1002</td>
+                                        <td>Globex Inc</td>
+                                        <td>$8,200</td>
+                                        <td><span class="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold uppercase tracking-wider">Active</span></td>
+                                        <td>Europe</td>
+                                        <td>2024-05-02</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1003</td>
+                                        <td>Soylent Corp</td>
+                                        <td>$15,000</td>
+                                        <td><span class="px-2 py-1 bg-red-500/10 text-red-500 text-[10px] rounded-full font-bold uppercase tracking-wider">Churned</span></td>
+                                        <td>Asia</td>
+                                        <td>2024-05-03</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1004</td>
+                                        <td>Initech</td>
+                                        <td>$3,400</td>
+                                        <td><span class="px-2 py-1 bg-yellow-500/10 text-yellow-500 text-[10px] rounded-full font-bold uppercase tracking-wider">Pending</span></td>
+                                        <td>North America</td>
+                                        <td>2024-05-04</td>
+                                    </tr>
+                                    <tr>
+                                        <td>#1005</td>
+                                        <td>Umbrella Corp</td>
+                                        <td>$22,100</td>
+                                        <td><span class="px-2 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold uppercase tracking-wider">Active</span></td>
+                                        <td>South America</td>
+                                        <td>2024-05-05</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-6 py-4 bg-white/5 text-center">
+                            <button class="btn-primary px-10 py-3 rounded-xl font-bold glow-purple" onclick="setLoading(this, true, 'Redirecting...'); window.location.href='preprocessing.html'">
+                                Analyze Dataset with AI
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark/80 backdrop-blur-sm">
+        <div class="glass max-w-sm w-full p-8 rounded-[2rem] border border-white/10 text-center animate-fade-in">
+            <div class="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500">
+                <i data-lucide="check-circle" class="w-10 h-10"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2 font-['Outfit']">Upload Successful!</h2>
+            <p class="text-gray-400 mb-8 text-sm">Your dataset has been validated and is ready for AI analysis.</p>
+            <button class="w-full btn-primary py-3 rounded-xl font-bold" onclick="closeModal()">
+                Continue to Analysis
+            </button>
+        </div>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const progressContainer = document.getElementById('progressContainer');
+        const previewSection = document.getElementById('previewSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const fileName = document.getElementById('fileName');
+        const successModal = document.getElementById('successModal');
+
+        // Stats Elements
+        const rowCountEl = document.getElementById('rowCount');
+        const colCountEl = document.getElementById('colCount');
+        const missingValuesEl = document.getElementById('missingValues');
+        const fileSizeEl = document.getElementById('fileSize');
+
+        // Table Elements
+        const tableHead = document.getElementById('tableHead');
+        const tableBody = document.getElementById('tableBody');
+
+        // Drag and Drop Logic
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragging'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragging'), false);
+        });
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (validateFile(file)) {
+                    processFile(file);
+                }
+            }
+        }
+
+        function validateFile(file) {
+            const allowedExtensions = ['.csv', '.xlsx', '.xls'];
+            const fileExtension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+            if (!allowedExtensions.includes(fileExtension)) {
+                showToast('Invalid file format. Please upload CSV or Excel files.', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        function updateProgress(value) {
+            progressBar.style.width = value + '%';
+            progressText.innerText = Math.round(value) + '%';
+        }
+
+        function processFile(file) {
+            fileName.innerText = file.name;
+            progressContainer.classList.remove('hidden');
+            updateProgress(0);
+
+            const fileExtension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+            
+            if (fileExtension === '.csv') {
+                parseCSV(file);
+            } else {
+                parseExcel(file);
+            }
+        }
+
+        function parseCSV(file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    updateProgress(100);
+                    processData(results.data, file);
+                },
+                error: function(err) {
+                    showToast("Error parsing CSV: " + err.message, 'error');
+                }
+            });
+        }
+
+        function parseExcel(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                updateProgress(100);
+                processData(jsonData, file);
+            };
+            reader.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 100;
+                    updateProgress(percent);
+                }
+            };
+            reader.onerror = function() {
+                showToast("Error reading Excel file.", 'error');
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processData(data, file) {
+            if (!data || data.length === 0) {
+                showToast("No data found in file.", 'error');
+                return;
+            }
+
+            const columns = Object.keys(data[0]);
+            const rowCount = data.length;
+            const colCount = columns.length;
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+            // Calculate missing values
+            let missingCount = 0;
+            data.forEach(row => {
+                columns.forEach(col => {
+                    const val = row[col];
+                    if (val === null || val === undefined || val === '') {
+                        missingCount++;
+                    }
+                });
+            });
+
+            // Save to localStorage
+            localStorage.setItem('dm_dataset', JSON.stringify(data.slice(0, 500)));
+            localStorage.setItem('dm_columns', JSON.stringify(columns));
+            localStorage.setItem('dm_filename', file.name);
+            localStorage.setItem('dm_rowcount', rowCount.toString());
+            localStorage.setItem('dm_colcount', colCount.toString());
+            localStorage.setItem('dm_missing', missingCount.toString());
+            localStorage.setItem('dm_filesize', fileSizeMB);
+
+            // Update stats UI
+            rowCountEl.innerText = rowCount.toLocaleString();
+            colCountEl.innerText = colCount;
+            missingValuesEl.innerText = missingCount.toLocaleString();
+            fileSizeEl.innerText = fileSizeMB + ' MB';
+
+            // Prepare preview
+            populatePreview(data, columns);
+
+            setTimeout(() => {
+                onUploadComplete();
+            }, 500);
+        }
+
+        function populatePreview(data, columns) {
+            // Header: first 6 columns
+            const previewCols = columns.slice(0, 6);
+            let headerHtml = '<tr>';
+            previewCols.forEach(col => {
+                headerHtml += `<th>${col}</th>`;
+            });
+            headerHtml += '</tr>';
+            tableHead.innerHTML = headerHtml;
+
+            // Body: first 5 rows
+            const previewRows = data.slice(0, 5);
+            let bodyHtml = '';
+            previewRows.forEach(row => {
+                bodyHtml += '<tr>';
+                previewCols.forEach(col => {
+                    const val = row[col] ?? '';
+                    bodyHtml += `<td>${val}</td>`;
+                });
+                bodyHtml += '</tr>';
+            });
+            tableBody.innerHTML = bodyHtml;
+        }
+
+        function onUploadComplete() {
+            progressContainer.classList.add('hidden');
+            successModal.classList.remove('hidden');
+            localStorage.setItem('dm_mode', 'single');
+        }
+
+        function closeModal() {
+            successModal.classList.add('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            previewSection.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        // ── Multi-Upload Mode ─────────────────────────────────────────────────
+        let currentMode = 'single';
+        let multiDatasets = {};
+        let multiCardCount = 2;
+        const datasetMeta = {
+            1: { label: 'Dataset 1', purpose: 'Primary Dataset' },
+            2: { label: 'Dataset 2', purpose: 'Secondary Dataset' },
+            3: { label: 'Dataset 3', purpose: 'Tertiary Dataset' }
+        };
+
+        function switchMode(mode) {
+            currentMode = mode;
+            const singleBtn = document.getElementById('btnModeSingle');
+            const multiBtn  = document.getElementById('btnModeMulti');
+            const uploadSec = document.getElementById('uploadSection');
+            const multiSec  = document.getElementById('multiUploadSection');
+            if (mode === 'single') {
+                singleBtn.className = 'px-6 py-3 rounded-xl text-sm font-bold transition-all bg-primary text-white shadow-lg shadow-primary/20';
+                multiBtn.className  = 'px-6 py-3 rounded-xl text-sm font-bold transition-all bg-white/5 border border-white/10 text-gray-400 hover:text-white';
+                multiSec.classList.add('hidden');
+                uploadSec.classList.remove('hidden');
+                previewSection.classList.add('hidden');
+                localStorage.setItem('dm_mode', 'single');
+            } else {
+                multiBtn.className  = 'px-6 py-3 rounded-xl text-sm font-bold transition-all bg-primary text-white shadow-lg shadow-primary/20';
+                singleBtn.className = 'px-6 py-3 rounded-xl text-sm font-bold transition-all bg-white/5 border border-white/10 text-gray-400 hover:text-white';
+                uploadSec.classList.add('hidden');
+                previewSection.classList.add('hidden');
+                multiSec.classList.remove('hidden');
+                localStorage.setItem('dm_mode', 'multiple');
+                if (document.getElementById('multiCardsRow').children.length === 0) renderMultiCards();
+            }
+        }
+
+        function renderMultiCards() {
+            const row = document.getElementById('multiCardsRow');
+            row.innerHTML = '';
+            for (let i = 1; i <= multiCardCount; i++) row.appendChild(createMultiCard(i));
+            lucide.createIcons();
+            updateMultiStatus();
+        }
+
+        function createMultiCard(index) {
+            const meta = datasetMeta[index];
+            const card = document.createElement('div');
+            card.id = `multiCard_${index}`;
+            card.className = 'glass border border-white/5 rounded-2xl p-8 flex-1 min-w-64 text-center relative transition-all cursor-pointer';
+            card.innerHTML = `
+                <div id="multiCheck_${index}" class="hidden absolute top-4 right-4 w-7 h-7 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
+                    <i data-lucide="check" class="w-4 h-4 text-white"></i>
+                </div>
+                <div class="mb-4">
+                    <div class="text-primary font-bold text-sm uppercase tracking-widest">${meta.label}</div>
+                    <div class="text-xs text-gray-500 mt-1">${meta.purpose}</div>
+                </div>
+                <div class="my-6">
+                    <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-transform hover:scale-110">
+                        <i data-lucide="upload-cloud" class="w-8 h-8 text-primary/50"></i>
+                    </div>
+                    <div id="multiFileName_${index}" class="hidden text-sm font-bold text-white mb-2 truncate px-2"></div>
+                    <div id="multiReadyBadge_${index}" class="hidden inline-block px-3 py-1 bg-green-500/10 text-green-500 text-[10px] rounded-full font-bold uppercase tracking-wider border border-green-500/20">✓ Ready</div>
+                </div>
+                <p class="text-gray-500 text-xs mb-4">Drop file here or</p>
+                <input type="file" id="multiInput_${index}" class="hidden" accept=".csv, .xlsx, .xls">
+                <button onclick="document.getElementById('multiInput_${index}').click()"
+                    class="px-5 py-2 bg-white/5 border border-white/10 rounded-xl text-sm font-bold hover:bg-white/10 transition-all">
+                    Browse
+                </button>
+            `;
+            card.addEventListener('dragenter', e => { e.preventDefault(); card.classList.add('border-primary/40','bg-primary/5'); });
+            card.addEventListener('dragover',  e => { e.preventDefault(); });
+            card.addEventListener('dragleave', () => card.classList.remove('border-primary/40','bg-primary/5'));
+            card.addEventListener('drop', e => {
+                e.preventDefault();
+                card.classList.remove('border-primary/40','bg-primary/5');
+                if (e.dataTransfer.files.length > 0) handleMultiFile(e.dataTransfer.files[0], index);
+            });
+            return card;
+        }
+
+        document.addEventListener('change', function(e) {
+            const m = e.target.id && e.target.id.match(/^multiInput_(\d+)$/);
+            if (m) handleMultiFile(e.target.files[0], parseInt(m[1]));
+        });
+
+        function handleMultiFile(file, index) {
+            if (!validateFile(file)) return;
+            const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+            if (ext === '.csv') multiParseCSV(file, index);
+            else multiParseExcel(file, index);
+        }
+
+        function multiParseCSV(file, index) {
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true,
+                complete: r => multiProcessData(r.data, file, index),
+                error:    e => showToast('CSV error: ' + e.message, 'error')
+            });
+        }
+
+        function multiParseExcel(file, index) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+                multiProcessData(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]), file, index);
+            };
+            reader.onerror = () => showToast('Error reading Excel file.', 'error');
+            reader.readAsArrayBuffer(file);
+        }
+
+        function multiProcessData(data, file, index) {
+            if (!data || data.length === 0) { showToast('No data found in file.', 'error'); return; }
+            const cols    = Object.keys(data[0]);
+            const rows    = data.length;
+            const colCnt  = cols.length;
+            const sizeMB  = (file.size / (1024 * 1024)).toFixed(2);
+            let missing   = 0;
+            data.forEach(row => cols.forEach(c => { if (row[c] === null || row[c] === undefined || row[c] === '') missing++; }));
+            const sliced  = data.slice(0, 500);
+
+            localStorage.setItem(`dm_dataset_${index}`,  JSON.stringify(sliced));
+            localStorage.setItem(`dm_columns_${index}`,  JSON.stringify(cols));
+            localStorage.setItem(`dm_filename_${index}`, file.name);
+            localStorage.setItem(`dm_rowcount_${index}`, rows.toString());
+            localStorage.setItem(`dm_colcount_${index}`, colCnt.toString());
+            localStorage.setItem(`dm_missing_${index}`,  missing.toString());
+            localStorage.setItem(`dm_filesize_${index}`, sizeMB);
+
+            if (index === 1) {
+                localStorage.setItem('dm_dataset',  JSON.stringify(sliced));
+                localStorage.setItem('dm_columns',  JSON.stringify(cols));
+                localStorage.setItem('dm_filename', file.name);
+                localStorage.setItem('dm_rowcount', rows.toString());
+                localStorage.setItem('dm_colcount', colCnt.toString());
+                localStorage.setItem('dm_missing',  missing.toString());
+                localStorage.setItem('dm_filesize', sizeMB);
+            }
+            localStorage.setItem('dm_mode', 'multiple');
+            localStorage.setItem('dm_active_dataset', '1');
+
+            multiDatasets[index] = { data: sliced, file };
+            localStorage.setItem('dm_dataset_count', Object.keys(multiDatasets).length.toString());
+            markCardReady(index, file.name);
+            updateMultiStatus();
+        }
+
+        function markCardReady(index, name) {
+            const card  = document.getElementById(`multiCard_${index}`);
+            const check = document.getElementById(`multiCheck_${index}`);
+            const fname = document.getElementById(`multiFileName_${index}`);
+            const badge = document.getElementById(`multiReadyBadge_${index}`);
+            if (card)  { card.classList.remove('border-white/5'); card.classList.add('border-green-500/30'); }
+            if (check) check.classList.remove('hidden');
+            if (fname) { fname.innerText = name; fname.classList.remove('hidden'); }
+            if (badge) badge.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function addThirdDataset() {
+            if (multiCardCount >= 3) return;
+            multiCardCount = 3;
+            document.getElementById('multiCardsRow').appendChild(createMultiCard(3));
+            document.getElementById('btnAddThird').classList.add('hidden');
+            lucide.createIcons();
+            updateMultiStatus();
+        }
+
+        function updateMultiStatus() {
+            const ready = Object.keys(multiDatasets).length;
+            const total = multiCardCount;
+            const text  = document.getElementById('multiReadyText');
+            const btn   = document.getElementById('btnMultiContinue');
+            if (text) text.innerText = `${ready} of ${total} datasets ready`;
+            if (btn)  btn.disabled = (ready < 1);
+        }
+
+        function multiContinue() {
+            window.location.href = 'preprocessing.html';
+        }
+    </script>
+    <!-- Firebase Auth Guard -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Update User Identity
+                const storedName = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+                if (storedName) {
+                    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = storedName);
+                    document.querySelectorAll('.user-avatar-display').forEach(el => {
+                        el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedName)}&background=random`;
+                    });
+                }
+            }
+        });
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        
+        const handleLogout = async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            localStorage.removeItem('dm_user_email');
+            localStorage.removeItem('dm_user_name');
+            window.location.href = 'index.html';
+        };
+
+        if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+        if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+
+        // Dropdown Toggle Logic
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (menuToggle) {
+          menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+          });
+          overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+          });
+        }
+    </script>
+    </script>
+<script>
+(function(){
+  var btn=document.getElementById('hamburgerBtn');
+  var sidebar=document.querySelector('.sidebar');
+  var h1=document.getElementById('hb1');
+  var h2=document.getElementById('hb2');
+  var h3=document.getElementById('hb3');
+  if(!btn||!sidebar)return;
+  sidebar.style.transition='margin-left 0.3s ease';
+  var open=localStorage.getItem('dm_sidebar_open')!=='false';
+  function applyState(isOpen,animate){
+    if(!animate)sidebar.style.transition='none';
+    sidebar.style.marginLeft=isOpen?'0px':'-260px';
+    if(!animate)setTimeout(function(){sidebar.style.transition='margin-left 0.3s ease';},50);
+    if(isOpen){h1.style.transform='none';h2.style.opacity='1';h2.style.transform='none';h3.style.transform='none';}
+    else{h1.style.transform='translateY(7px) rotate(45deg)';h2.style.opacity='0';h2.style.transform='scaleX(0)';h3.style.transform='translateY(-7px) rotate(-45deg)';}
+  }
+  applyState(open,false);
+  btn.addEventListener('click',function(){open=!open;localStorage.setItem('dm_sidebar_open',open?'true':'false');applyState(open,true);});
+})();
+</script></body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — Sign Up</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark text-gray-100 overflow-x-hidden">
+
+    <!-- Background Blobs -->
+    <div class="bg-blur-blob bg-primary/10 top-[-100px] right-[-100px]"></div>
+    <div class="bg-blur-blob bg-secondary/10 bottom-[-100px] left-[-100px]"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Left Side: Illustration (Hidden on Mobile) -->
+        <div class="hidden lg:flex w-1/2 relative flex-col items-center justify-center p-12 bg-white/[0.02] border-r border-white/5">
+            <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10"></div>
+            
+            <div class="relative z-10 text-center max-w-md">
+                <a href="index.html" class="flex items-center justify-center gap-3 mb-12 group">
+                    <div class="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="brain" class="w-8 h-8 text-white"></i>
+                    </div>
+                    <span class="text-3xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+                </a>
+                
+                <div class="mb-12 ai-illustration">
+                    <div class="relative inline-block">
+                        <div class="absolute inset-0 bg-secondary/20 blur-3xl rounded-full"></div>
+                        <i data-lucide="database" class="w-64 h-64 text-secondary relative z-10 opacity-80"></i>
+                    </div>
+                </div>
+
+                <h2 class="text-3xl font-bold mb-4 font-['Outfit']">Join the Revolution</h2>
+                <p class="text-gray-400 text-lg">Start your journey into AI-driven data intelligence today. Create an account in seconds.</p>
+            </div>
+            
+            <!-- Floating Decorative Elements -->
+            <div class="absolute top-1/3 left-1/4 w-4 h-4 bg-primary rounded-full blur-sm animate-pulse"></div>
+            <div class="absolute bottom-1/3 right-1/4 w-6 h-6 bg-secondary rounded-full blur-sm animate-pulse" style="animation-delay: 1s"></div>
+        </div>
+
+        <!-- Right Side: Signup Form -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 relative">
+            <!-- Mobile Logo -->
+            <a href="index.html" class="lg:hidden absolute top-8 left-8 flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </a>
+
+            <div class="auth-card glass border border-white/10 shadow-2xl animate-fade-in my-12">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold mb-2 font-['Outfit']">Create Account</h1>
+                    <p class="text-gray-400">Join 50,000+ data professionals worldwide.</p>
+                </div>
+
+                <form id="signupForm" class="space-y-4">
+                    <div class="space-y-2">
+                        <label for="fullname" class="text-sm font-medium text-gray-300">Full Name</label>
+                        <div class="relative">
+                            <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                            <input type="text" id="fullname" placeholder="John Doe" class="w-full pl-12 pr-4 py-3 rounded-xl input-field" required>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="email" class="text-sm font-medium text-gray-300">Email Address</label>
+                        <div class="relative">
+                            <i data-lucide="mail" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                            <input type="email" id="email" placeholder="name@company.com" class="w-full pl-12 pr-4 py-3 rounded-xl input-field" required>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="password" class="text-sm font-medium text-gray-300">Password</label>
+                        <div class="relative">
+                            <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500"></i>
+                            <input type="password" id="password" placeholder="••••••••" class="w-full pl-12 pr-12 py-3 rounded-xl input-field" required>
+                            <button type="button" class="password-toggle absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors">
+                                <i data-lucide="eye-off" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                        <div class="text-[10px] text-gray-500 mt-1">Must be at least 8 characters with a number and symbol.</div>
+                    </div>
+
+                    <div class="flex items-start gap-2 mt-4">
+                        <input type="checkbox" id="terms" class="mt-1 w-4 h-4 rounded border-gray-700 bg-gray-800 text-primary focus:ring-primary" required>
+                        <label for="terms" class="text-xs text-gray-400 leading-tight">
+                            I agree to the <a href="#" class="text-primary hover:underline">Terms of Service</a> and <a href="#" class="text-primary hover:underline">Privacy Policy</a>.
+                        </label>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="w-full py-4 rounded-xl btn-primary font-bold text-lg flex items-center justify-center gap-2 mt-4">
+                        <span>Create Account</span>
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    </button>
+                </form>
+
+                <div class="mt-6 relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-white/10"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs uppercase">
+                        <span class="bg-[#0b0b0d] px-2 text-gray-500">Or sign up with</span>
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 gap-4">
+                    <button id="googleSignupBtn" class="flex items-center justify-center gap-3 w-full py-3 rounded-xl btn-secondary font-medium">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" />
+                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 1.2-4.53z" />
+                        </svg>
+                        Google
+                    </button>
+                </div>
+
+                <p class="mt-8 text-center text-sm text-gray-500">
+                    Already have an account? 
+                    <a href="login.html" class="text-primary font-bold hover:underline">Sign in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initialize Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <!-- Project Config -->
+    <script src="config.js"></script>
+
+    <!-- Firebase Authentication Module -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        // Initialize Firebase
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        const signupForm = document.getElementById('signupForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const googleBtn = document.getElementById('googleSignupBtn');
+        const fullnameInput = document.getElementById('fullname');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+
+        // Password Visibility Toggle
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const input = btn.parentElement.querySelector('input');
+            if (input.type === 'password') {
+              input.type = 'text';
+              btn.innerHTML = '<i data-lucide="eye" class="w-5 h-5"></i>';
+            } else {
+              input.type = 'password';
+              btn.innerHTML = '<i data-lucide="eye-off" class="w-5 h-5"></i>';
+            }
+            lucide.createIcons();
+          });
+        });
+
+        // Email/Password Signup
+        signupForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          setButtonLoading(submitBtn, true);
+          try {
+            const cred = await createUserWithEmailAndPassword(
+              auth, emailInput.value, passwordInput.value);
+            
+            // Set the display name in Firebase Profile
+            await updateProfile(cred.user, {
+              displayName: fullnameInput.value
+            });
+
+            localStorage.setItem('dm_user_email', cred.user.email);
+            localStorage.setItem('dm_user_name', fullnameInput.value);
+            window.location.href = 'upload.html';
+          } catch (err) {
+            showAuthError(getErrorMessage(err.code));
+            setButtonLoading(submitBtn, false);
+          }
+        });
+
+        // Google Signup
+        googleBtn.addEventListener('click', async () => {
+          try {
+            const provider = new GoogleAuthProvider();
+            const cred = await signInWithPopup(auth, provider);
+            localStorage.setItem('dm_user_email', cred.user.email);
+            localStorage.setItem('dm_user_name', 
+              cred.user.displayName || cred.user.email);
+            window.location.href = 'dashboard.html';
+          } catch (err) {
+            console.error("Google Sign-In Error:", err);
+            showAuthError('Google sign-in failed: ' + err.message);
+          }
+        });
+
+        // Helper Functions
+        function showAuthError(message) {
+            let errorDiv = document.getElementById('authError');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.id = 'authError';
+                errorDiv.className = 'mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm';
+                submitBtn.parentNode.insertBefore(errorDiv, submitBtn);
+            }
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function getErrorMessage(code) {
+            const messages = {
+                'auth/email-already-in-use': 'This email is already registered. Try logging in.',
+                'auth/operation-not-allowed': 'Email/Password sign-in is not enabled in your Firebase Console.',
+                'auth/weak-password': 'Password must be at least 6 characters.',
+                'auth/invalid-email': 'Please enter a valid email address.',
+                'auth/too-many-requests': 'Too many attempts. Please wait and try again.'
+            };
+            console.error("Firebase Auth Error Code:", code);
+            return messages[code] || 'Something went wrong. Please try again.';
+        }
+
+        function setButtonLoading(btn, loading) {
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.original = btn.innerHTML;
+                btn.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.original;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,2430 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>DataMind AI — Dashboard Builder</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>X</text></svg>"><script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/lucide@latest"></script><script src="config.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-treemap@2.3.0/dist/chartjs-chart-treemap.min.js"></script><link rel="stylesheet" href="index.css"><script src="datastore.js"></script><script>tailwind.config={theme:{extend:{colors:{primary:'#8B5CF6',secondary:'#3B82F6',accent:'#06B6D4',dark:'#030305'}}}}</script>
+<style>
+.builder-canvas{background-color:#09090f;background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);background-size:24px 24px;position:relative;overflow:hidden;}
+.visual-tile{position:absolute;background:rgba(15,15,25,.95);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:visible;cursor:default;user-select:none;}
+.visual-tile.selected{border-color:#3B82F6;box-shadow:0 0 0 2px rgba(59,130,246,.3);}
+.tile-header{padding:7px 10px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:600;cursor:move;}
+.tile-body{position:absolute;inset:36px 0 0 0;padding:8px;overflow:hidden;}
+.resize-handle{position:absolute;width:8px;height:8px;background:#3B82F6;border-radius:2px;z-index:20;display:none;}
+.visual-tile.selected .resize-handle{display:block;}
+.rh-nw{top:-4px;left:-4px;cursor:nw-resize}.rh-n{top:-4px;left:calc(50% - 4px);cursor:n-resize}.rh-ne{top:-4px;right:-4px;cursor:ne-resize}
+.rh-e{top:calc(50% - 4px);right:-4px;cursor:e-resize}.rh-se{bottom:-4px;right:-4px;cursor:se-resize}.rh-s{bottom:-4px;left:calc(50% - 4px);cursor:s-resize}
+.rh-sw{bottom:-4px;left:-4px;cursor:sw-resize}.rh-w{top:calc(50% - 4px);left:-4px;cursor:w-resize}
+.field-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;font-size:11px;cursor:grab;}
+.field-item:hover{background:rgba(255,255,255,.06);}
+.field-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.well-zone{border:1.5px dashed rgba(255,255,255,.12);border-radius:8px;min-height:32px;padding:4px;font-size:10px;color:rgba(255,255,255,.3);background:rgba(255,255,255,.02);transition:all .15s;}
+.well-zone.drag-over{border-color:#8B5CF6;background:rgba(139,92,246,.08);}
+.field-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.3);border-radius:5px;padding:2px 6px;font-size:10px;margin:2px;}
+.visual-icon-btn{width:42px;height:42px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:7.5px;color:rgba(255,255,255,.45);cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.visual-icon-btn:hover{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.15);transform:translateY(-1px);}
+.visual-icon-btn.sel-type{border-color:#8B5CF6;background:rgba(139,92,246,.12);color:#fff;box-shadow:0 0 10px rgba(139,92,246,.2);}
+.visual-icon-btn i{transition:transform .15s;}
+.visual-icon-btn:hover i{transform:scale(1.1);}
+.viz-mini-icon{display:flex;align-items:flex-end;gap:1px;height:12px;margin-bottom:1px;}
+.viz-mini-bar{width:3px;background:currentColor;border-radius:0.5px;}
+.viz-mini-line{width:16px;height:1.5px;background:currentColor;transform:rotate(-30deg);position:relative;}
+.viz-mini-line::after{content:'';position:absolute;right:0;top:-2px;width:4px;height:4px;border-radius:50%;background:currentColor;}
+.panel-tab-btn{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;color:rgba(255,255,255,.5);transition:all .15s;}
+.panel-tab-btn.active{background:rgba(255,255,255,.08);color:#fff;}
+.page-tab-pill{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);white-space:nowrap;transition:all .15s;}
+.page-tab-pill.active{background:#8B5CF6;border-color:#8B5CF6;color:#fff;}
+.ribbon-btn{display:flex;align-items:center;gap:4px;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.ribbon-btn:hover{background:rgba(255,255,255,.1);color:#fff;}
+.ctx-menu{position:fixed;background:rgba(8,8,18,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:4px;z-index:2000;min-width:160px;box-shadow:0 20px 60px rgba(0,0,0,.7);backdrop-filter:blur(20px);}
+.ctx-item{padding:7px 12px;border-radius:6px;font-size:11px;cursor:pointer;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:8px;transition:background .1s;}
+.ctx-item:hover{background:rgba(255,255,255,.07);color:#fff;}.ctx-item.danger{color:#f87171;}.ctx-item.danger:hover{background:rgba(248,113,113,.1);}
+.rubber-band{position:absolute;border:1.5px dashed #3B82F6;background:rgba(59,130,246,.05);pointer-events:none;z-index:5;}
+.custom-scrollbar::-webkit-scrollbar{width:4px;}.custom-scrollbar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px;}
+.dimmed{opacity:.3;transition:opacity .2s;}.filter-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px;font-size:11px;}
+.fmt-section{border:1px solid rgba(255,255,255,.06);border-radius:8px;overflow:hidden;margin-bottom:4px;}
+.fmt-section-hdr{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;cursor:pointer;background:rgba(255,255,255,.03);font-size:11px;font-weight:600;}
+.fmt-section-hdr:hover{background:rgba(255,255,255,.06);}
+.fmt-section-body{padding:8px 10px;font-size:11px;}
+.fmt-section-body.collapsed{display:none;}
+.fmt-input{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:3px 8px;font-size:11px;color:white;outline:none;width:100%;}
+.fmt-input:focus{border-color:#8B5CF6;}
+.fmt-select{background:rgba(10,10,20,.9);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:3px 6px;font-size:10px;color:white;outline:none;}
+.fmt-align-btn{padding:3px 8px;border:1px solid rgba(255,255,255,.1);border-radius:4px;font-size:12px;cursor:pointer;background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);}
+.fmt-align-btn:hover{background:rgba(255,255,255,.1);}
+.analytics-line-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.condFmt-rule-row{display:flex;align-items:center;gap-4px;padding:6px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:8px;}</style></head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="dashboard-container">
+<aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+  <div class="flex items-center gap-2 mb-10">
+    <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center"><i data-lucide="brain" class="w-5 h-5 text-white"></i></div>
+    <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+  </div>
+  <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+    <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+    <a href="dashboard.html" class="nav-link"><i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+    <a href="upload.html" class="nav-link"><i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+    <a href="preprocessing.html" class="nav-link"><i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+    <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+    <a href="visualization.html" class="nav-link active"><i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+    <a href="chatbot.html" class="nav-link"><i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+    <a href="report.html" class="nav-link"><i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+    <a href="ml-model.html" class="nav-link"><i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+    <a href="contact.html" class="nav-link"><i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+  </nav>
+  <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+    <a href="settings.html" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+    <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+  </div>
+</aside>
+<main class="main-content relative bg-dark/50 flex flex-col overflow-hidden" style="height:100vh;">
+<header class="z-30 glass border-b border-white/5 py-3 px-6 flex justify-between items-center flex-shrink-0">
+  
+  <div class="flex items-center gap-3"><button id="hamburgerBtn" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:34px;height:34px;background:transparent;border:none;cursor:pointer;flex-shrink:0;border-radius:8px;padding:4px;margin-right:4px;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'"><span id="hb1" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb2" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb3" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span></button>
+    <div class="p-2 bg-primary/10 rounded-lg"><i data-lucide="layout-dashboard" class="w-4 h-4 text-primary"></i></div>
+    <div><h1 class="text-base font-bold font-['Outfit']">Dashboard Builder</h1><p class="text-[10px] text-gray-500 uppercase tracking-widest">PowerBI-Style Visual Editor</p></div>
+  </div>
+  <div class="flex items-center gap-4">
+    <button class="relative p-2 text-gray-400 hover:text-white"><i data-lucide="bell" class="w-5 h-5"></i><span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span></button>
+    <div class="relative">
+      <div id="profileDropdownBtn" class="flex items-center gap-3 pl-4 border-l border-white/5 cursor-pointer">
+        <div class="text-right hidden sm:block"><div class="text-sm font-bold user-name-display">User</div><div class="text-[10px] text-gray-500">Pro Plan</div></div>
+        <div class="w-8 h-8 rounded-full bg-gradient-primary p-[2px]"><img src="https://ui-avatars.com/api/?name=User&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile"></div>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+      </div>
+      <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+        <div class="px-4 py-3 border-b border-white/5"><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p><p class="text-xs font-medium truncate user-name-display">User</p></div>
+        <div class="py-1">
+          <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5"><i data-lucide="user" class="w-4 h-4"></i> Profile</a>
+          <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5"><i data-lucide="settings" class="w-4 h-4"></i> Settings</a>
+        </div>
+        <div class="h-px bg-white/5 my-1"></div>
+        <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 text-left"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="glass border-b border-white/5 px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0 z-20" style="min-height:44px;">
+  <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar" style="max-width:60%;">
+    <div id="pageTabs" class="flex items-center gap-2 flex-shrink-0"></div>
+    <button id="addPageBtn" title="Add page" class="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 flex-shrink-0 text-base font-bold">+</button>
+  </div>
+  <div class="flex items-center gap-2 flex-shrink-0">
+    <button id="readingViewBtn" class="ribbon-btn"><i data-lucide="eye" class="w-3 h-3"></i>Reading View</button>
+    <button id="undoBtn" class="ribbon-btn" title="Ctrl+Z"><i data-lucide="undo-2" class="w-3 h-3"></i></button>
+    <button id="redoBtn" class="ribbon-btn" title="Ctrl+Y"><i data-lucide="redo-2" class="w-3 h-3"></i></button>
+    <button id="exportPdfBtn" class="ribbon-btn"><i data-lucide="file-down" class="w-3 h-3"></i>PDF</button>
+    <button id="saveBtn" class="ribbon-btn" style="border-color:#8B5CF6;color:#8B5CF6;"><i data-lucide="save" class="w-3 h-3"></i>Save</button>
+  </div>
+</div>
+<div class="flex flex-1 overflow-hidden">
+  <!-- LEFT PANEL -->
+  <!-- LEFT PANEL — two-column layout -->
+  <div id="builderLeftPanel" class="flex-shrink-0 glass border-r border-white/5 flex flex-row overflow-hidden relative" style="width:280px;">
+    <!-- Fields column -->
+    <div id="fieldsPanel" class="flex-shrink-0 flex flex-col overflow-hidden border-r border-white/5" style="width:110px; min-width:80px;">
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold px-2 pt-2 pb-1 flex-shrink-0">Fields</div>
+      <div class="flex-1 overflow-y-auto custom-scrollbar px-1 pb-2">
+        <div id="numericFieldsList"></div>
+        <div id="catFieldsList" class="mt-2"></div>
+        <div id="dateFieldsList" class="mt-2"></div>
+        <button onclick="openAIMeasure()" class="mt-2 w-full py-1.5 text-[9px] font-bold text-primary border border-primary/30 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">+ Measure</button>
+      </div>
+    </div>
+    <!-- Internal Resizer -->
+    <div id="innerResizer" class="col-resizer"></div>
+    <!-- Build column -->
+    <div class="flex-1 flex flex-col overflow-y-auto custom-scrollbar p-2 gap-2 min-w-0">
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold">Visualizations</div>
+      <div id="visualGallery" class="grid gap-1" style="grid-template-columns:repeat(3,1fr);"></div>
+      <div id="fieldWellsSection" class="hidden mt-1">
+        <div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-2">Field Wells</div>
+        <div id="fieldWells" class="space-y-2"></div>
+      </div>
+    </div>
+    <!-- Outer Resizer -->
+    <div id="outerResizer" class="col-resizer-sidebar"></div>
+  </div>
+  <!-- CANVAS -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <div class="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-[#09090f] flex-shrink-0 relative z-50">
+      <button id="selectModeBtn" class="ribbon-btn text-[10px]" onclick="setMode('select')"><i data-lucide="mouse-pointer" class="w-3 h-3"></i>Select</button>
+      <button id="crossFilterBtn" class="ribbon-btn text-[10px]" onclick="setMode('crossfilter')"><i data-lucide="filter" class="w-3 h-3"></i>Cross-filter</button>
+      <div class="w-px h-5 bg-white/10 mx-1"></div>
+      <button onclick="zoomCanvas(1.15)" class="ribbon-btn text-[10px]"><i data-lucide="zoom-in" class="w-3 h-3"></i></button>
+      <button onclick="zoomCanvas(0.85)" class="ribbon-btn text-[10px]"><i data-lucide="zoom-out" class="w-3 h-3"></i></button>
+      <button onclick="fitCanvas()" class="ribbon-btn text-[10px]">Fit</button>
+      <div class="w-px h-5 bg-white/10 mx-1"></div>
+      <label class="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer select-none"><input type="checkbox" id="gridSnapToggle" class="accent-primary w-3 h-3"> Snap</label>
+      <button onclick="addTextBox()" class="ribbon-btn text-[10px]"><i data-lucide="type" class="w-3 h-3"></i>Text</button>
+      <button onclick="addShape('rect')" class="ribbon-btn text-[10px]"><i data-lucide="square" class="w-3 h-3"></i>Shape</button>
+    </div>
+    <div id="canvasHeaderExtras" class="flex flex-col flex-shrink-0 relative z-40"></div>
+    <div id="canvasWrapper" class="flex-1 overflow-auto relative">
+      <div id="builderCanvas" class="builder-canvas" style="width:2400px;height:1600px;"></div>
+    </div>
+  </div>
+  <!-- RIGHT PANEL -->
+  <div class="flex-shrink-0 glass border-l border-white/5 flex flex-col" style="width:260px;">
+    <div class="flex gap-0 p-2 border-b border-white/5 flex-shrink-0">
+      <button class="panel-tab-btn active flex-1 text-center text-[10px]" id="formatTabBtn" onclick="switchRightTab('format')"><i data-lucide="paintbrush" class="w-3 h-3 inline mr-0.5"></i>Format</button>
+      <button class="panel-tab-btn flex-1 text-center text-[10px]" id="filtersTabBtn" onclick="switchRightTab('filters')"><i data-lucide="filter" class="w-3 h-3 inline mr-0.5"></i>Filters</button>
+      <button class="panel-tab-btn flex-1 text-center text-[10px]" id="analyticsTabBtn" onclick="switchRightTab('analytics')"><i data-lucide="search" class="w-3 h-3 inline mr-0.5"></i>Analytics</button>
+    </div>
+    <!-- FORMAT TAB -->
+    <div id="formatTab" class="flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+      <div id="fmtNoSel" class="text-center py-10 px-3"><i data-lucide="mouse-pointer" class="w-8 h-8 text-gray-700 mx-auto mb-2"></i><p class="text-[11px] text-gray-500">Select a visual to format</p></div>
+      <div id="fmtOptions" class="hidden flex-col flex-1">
+        <div class="flex border-b border-white/5 px-2 pt-1 gap-1">
+          <button id="fmtVisTabBtn" onclick="switchFmtTab('visual')" class="panel-tab-btn active text-[10px] flex-1">Visual</button>
+          <button id="fmtGenTabBtn" onclick="switchFmtTab('general')" class="panel-tab-btn text-[10px] flex-1">General</button>
+        </div>
+        <div id="fmtVisTab" class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+          <div id="fmtVisualSections"></div>
+        </div>
+        <div id="fmtGenTab" class="hidden flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+          <div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Title</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+            <div class="flex items-center justify-between"><span class="text-[10px] text-gray-400">Show title</span><input type="checkbox" id="genShowTitle" checked class="accent-primary" onchange="applyGenFmt()"></div>
+            <input id="genTitleText" type="text" class="fmt-input" placeholder="Visual title" oninput="applyGenFmt()">
+            <div class="flex gap-1"><select id="genTitleFont" class="fmt-select flex-1" onchange="applyGenFmt()"><option>Inter</option><option>Outfit</option><option>monospace</option></select><input id="genTitleSize" type="number" value="13" min="8" max="32" class="fmt-input w-14" oninput="applyGenFmt()"></div>
+            <div class="flex gap-2"><label class="flex items-center gap-1 text-[10px] text-gray-400"><input type="checkbox" id="genTitleBold" class="accent-primary" onchange="applyGenFmt()"> Bold</label><label class="flex items-center gap-1 text-[10px] text-gray-400"><input type="checkbox" id="genTitleItalic" class="accent-primary" onchange="applyGenFmt()"> Italic</label></div>
+            <div class="flex gap-2 items-center"><span class="text-[10px] text-gray-400">Color</span><input type="color" id="genTitleColor" value="#ffffff" class="w-8 h-6 rounded cursor-pointer bg-transparent border-0" onchange="applyGenFmt()"></div>
+            <div class="flex gap-1"><button onclick="setTitleAlign('left')" class="fmt-align-btn">&#8676;</button><button onclick="setTitleAlign('center')" class="fmt-align-btn">&#8596;</button><button onclick="setTitleAlign('right')" class="fmt-align-btn">&#8677;</button></div>
+          </div></div>
+          <div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Effects</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+            <div class="flex items-center justify-between"><span class="text-[10px] text-gray-400">Background</span><input type="checkbox" id="genBgOn" class="accent-primary" onchange="applyGenFmt()"></div>
+            <div class="flex gap-2 items-center"><input type="color" id="genBgColor" value="#0d0d18" class="w-8 h-6 rounded cursor-pointer bg-transparent border-0" onchange="applyGenFmt()"><input type="range" id="genBgOpacity" min="0" max="100" value="90" class="flex-1 accent-primary" oninput="applyGenFmt()"></div>
+            <div class="flex items-center justify-between"><span class="text-[10px] text-gray-400">Border</span><input type="checkbox" id="genBorderOn" class="accent-primary" onchange="applyGenFmt()"></div>
+            <div class="flex gap-2 items-center"><input type="color" id="genBorderColor" value="#ffffff" class="w-8 h-6 rounded cursor-pointer bg-transparent border-0" onchange="applyGenFmt()"><input type="number" id="genBorderW" value="1" min="1" max="8" class="fmt-input w-14" oninput="applyGenFmt()"><span class="text-[9px] text-gray-500">px</span></div>
+            <div class="flex items-center justify-between"><span class="text-[10px] text-gray-400">Shadow</span><input type="checkbox" id="genShadowOn" class="accent-primary" onchange="applyGenFmt()"></div>
+            <div class="space-y-1"><label class="text-[10px] text-gray-400">Border Radius</label><input id="fmtRadius" type="range" min="0" max="24" value="12" class="w-full accent-primary" oninput="applyGenFmt()"></div>
+          </div></div>
+          <div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Size &amp; Position</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+            <div class="grid grid-cols-2 gap-1"><div><div class="text-[9px] text-gray-500 mb-0.5">X</div><input id="posX" type="number" class="fmt-input w-full" oninput="applyPosFmt('x',this.value)"></div><div><div class="text-[9px] text-gray-500 mb-0.5">Y</div><input id="posY" type="number" class="fmt-input w-full" oninput="applyPosFmt('y',this.value)"></div></div>
+            <div class="grid grid-cols-2 gap-1"><div><div class="text-[9px] text-gray-500 mb-0.5">W</div><input id="posW" type="number" class="fmt-input w-full" oninput="applyPosFmt('w',this.value)"></div><div><div class="text-[9px] text-gray-500 mb-0.5">H</div><input id="posH" type="number" class="fmt-input w-full" oninput="applyPosFmt('h',this.value)"></div></div>
+          </div></div>
+          <div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Layer Order</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body flex gap-2">
+            <button onclick="bringForward()" class="flex-1 text-[10px] py-1.5 border border-white/10 rounded-lg hover:bg-white/5">Bring Forward</button>
+            <button onclick="sendBackward()" class="flex-1 text-[10px] py-1.5 border border-white/10 rounded-lg hover:bg-white/5">Send Backward</button>
+          </div></div>
+          <div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Alt Text</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body">
+            <textarea id="genAltText" rows="2" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] focus:border-primary outline-none" placeholder="Describe this visual for accessibility..." oninput="applyGenFmt()"></textarea>
+          </div></div>
+          <button onclick="deleteSelectedVisual()" class="w-full py-2 text-[10px] font-bold text-red-400 border border-red-400/20 bg-red-400/5 rounded-lg hover:bg-red-400/10 transition-colors">Delete Visual</button>
+        </div>
+      </div>
+    </div>
+    <!-- FILTERS TAB -->
+    <div id="filtersTab" class="hidden flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold">Filters on this visual</div>
+      <div id="visualFilters" class="space-y-2 min-h-8"><p class="text-[10px] text-gray-600">Select a visual to see its filters.</p></div>
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-3">Filters on this page</div>
+      <div id="pageFilters" class="space-y-2 well-zone" ondragover="event.preventDefault()" ondrop="dropToPageFilter(event)"><p class="text-[10px] text-gray-600">Drag fields here</p></div>
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold mt-3">Filters on all pages</div>
+      <div id="reportFilters" class="space-y-2 well-zone" ondragover="event.preventDefault()" ondrop="dropToReportFilter(event)"><p class="text-[10px] text-gray-600">Drag fields here</p></div>
+      <button onclick="applyAllFilters()" class="w-full py-2 text-[10px] font-bold text-primary border border-primary/30 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors mt-2">Apply All Filters</button>
+    </div>
+    <!-- ANALYTICS TAB -->
+    <div id="analyticsTab" class="hidden flex-1 overflow-y-auto custom-scrollbar p-3 space-y-3">
+      <div id="analyticsContent"><p class="text-[10px] text-gray-600">Select a visual to see analytics options.</p></div>
+    </div>
+  </div>
+</div>
+</main>
+</div>
+<!-- CONTEXT MENU: Canvas -->
+<div id="canvasCtxMenu" class="ctx-menu hidden">
+  <div class="ctx-item" onclick="pasteVisual()"><i data-lucide="clipboard" class="w-3 h-3"></i>Paste</div>
+  <div class="ctx-item" onclick="addTextBox()"><i data-lucide="type" class="w-3 h-3"></i>Add Text Box</div>
+  <div class="ctx-item" onclick="addShape('rect')"><i data-lucide="square" class="w-3 h-3"></i>Add Shape</div>
+  <div class="ctx-item" onclick="selectAll()"><i data-lucide="check-square" class="w-3 h-3"></i>Select All</div>
+</div>
+<!-- CONTEXT MENU: Tile -->
+<div id="tileCtxMenu" class="ctx-menu hidden">
+  <div class="ctx-item" onclick="copySelectedVisual()"><i data-lucide="copy" class="w-3 h-3"></i>Copy visual</div>
+  <div class="ctx-item" onclick="duplicateSelectedVisual()"><i data-lucide="layers" class="w-3 h-3"></i>Duplicate</div>
+  <div class="ctx-item" onclick="exportVisualCSV()"><i data-lucide="download" class="w-3 h-3"></i>Export data (CSV)</div>
+  <div class="ctx-item" onclick="showAsTable()"><i data-lucide="table" class="w-3 h-3"></i>Show as table</div>
+  <div class="ctx-item" onclick="spotlightVisual()"><i data-lucide="maximize-2" class="w-3 h-3"></i>Spotlight</div>
+  <div class="h-px bg-white/5 my-1"></div>
+  <div class="ctx-item danger" onclick="deleteSelectedVisual()"><i data-lucide="trash-2" class="w-3 h-3"></i>Delete visual</div>
+</div>
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 right-6 z-[9999] hidden glass border px-5 py-3 rounded-xl shadow-2xl text-sm font-bold max-w-xs"></div>
+<!-- AI MEASURE SLIDE-IN PANEL -->
+<div id="aiMeasurePanel" class="fixed top-0 left-0 h-full z-[4000] flex transition-transform duration-300" style="transform:translateX(-100%);pointer-events:none;">
+  <div class="glass border-r border-white/10 flex flex-col custom-scrollbar overflow-y-auto" style="width:400px;pointer-events:all;background:rgba(8,8,20,.97);">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-white/5">
+      <div class="flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-primary"></i><h3 class="font-bold font-['Outfit'] text-base">AI Measure Builder</h3></div>
+      <button onclick="closeAIMeasure()" class="p-1 text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="p-5 space-y-4 flex-1">
+      <div><label class="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-2">Describe the calculation you want:</label>
+        <textarea id="aiMeasureInput" rows="4" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:border-primary outline-none resize-none" placeholder="e.g. Calculate year over year sales growth percentage&#10;Show running total of revenue&#10;Count customers with more than 3 orders"></textarea>
+        <button onclick="generateAIMeasure()" id="aiMeasureBtn" class="w-full mt-3 py-2.5 bg-gradient-to-r from-primary to-secondary rounded-xl font-bold text-sm hover:opacity-90 transition-opacity">Generate Measure</button>
+      </div>
+      <div id="aiMeasureResultSection" class="hidden space-y-3">
+        <div><label class="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-1">Measure Name</label><input id="aiMeasureName" type="text" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-sm focus:border-primary outline-none"></div>
+        <div><label class="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-1">Formula Preview</label>
+          <div id="aiMeasureFormula" class="bg-black/40 border border-white/10 rounded-xl p-3 text-[11px] font-mono text-green-400 overflow-x-auto whitespace-pre-wrap"></div>
+        </div>
+        <details class="filter-card cursor-pointer"><summary class="text-[10px] font-bold text-gray-300">Explanation</summary><p id="aiMeasureExplanation" class="text-[10px] text-gray-400 mt-2 leading-relaxed"></p></details>
+        <div><label class="text-[10px] text-gray-400 uppercase tracking-widest font-bold block mb-1">Column Dependencies</label><div id="aiMeasureCols" class="flex flex-wrap gap-1"></div></div>
+        <div class="flex gap-2">
+          <button onclick="applyAIMeasure()" class="flex-1 py-2 text-[11px] font-bold bg-primary/15 border border-primary/30 text-primary rounded-lg hover:bg-primary/25 transition-colors">Apply to Dataset</button>
+          <button onclick="addAIMeasureToFields()" class="flex-1 py-2 text-[11px] font-bold bg-white/5 border border-white/10 rounded-lg hover:bg-white/10 transition-colors">Add to Fields</button>
+        </div>
+      </div>
+      <div class="border-t border-white/5 pt-4"><div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-2">Saved Measures</div><div id="savedMeasuresList" class="space-y-1.5"></div></div>
+    </div>
+  </div>
+</div>
+<!-- CONDITIONAL FORMATTING MODAL -->
+<div id="condFmtModal" class="hidden fixed inset-0 z-[5000] flex items-center justify-center" style="background:rgba(0,0,0,.75);">
+  <div class="glass border border-white/10 rounded-2xl shadow-2xl" style="width:500px;max-height:80vh;overflow-y:auto;">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-white/5">
+      <h3 class="font-bold font-['Outfit']">Conditional Formatting — <span id="condFmtField">Field</span></h3>
+      <button onclick="closeCondFmt()" class="text-gray-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div class="flex gap-2 mb-2">
+        <button onclick="setCondFmtMode('rules')" id="cfmRulesBtn" class="ribbon-btn text-[10px] active-cf">Rules</button>
+        <button onclick="setCondFmtMode('gradient')" id="cfmGradBtn" class="ribbon-btn text-[10px]">Gradient</button>
+        <button onclick="setCondFmtMode('field')" id="cfmFieldBtn" class="ribbon-btn text-[10px]">Field Value</button>
+      </div>
+      <div id="cfmRules">
+        <div id="cfmRulesList" class="space-y-2"></div>
+        <button onclick="addCondFmtRule()" class="mt-2 w-full py-2 text-[10px] font-bold border border-white/10 rounded-lg hover:bg-white/5 transition-colors">+ Add Rule</button>
+      </div>
+      <div id="cfmGradient" class="hidden space-y-3">
+        <div class="flex items-center gap-3"><label class="text-[10px] text-gray-400 w-16">Min</label><input type="color" id="cfmGradMin" value="#3B82F6" class="w-8 h-7 rounded border-0 bg-transparent cursor-pointer"><input type="text" placeholder="Auto" class="fmt-input flex-1"></div>
+        <div class="flex items-center gap-3"><label class="text-[10px] text-gray-400 w-16">Center</label><input type="color" id="cfmGradMid" value="#8B5CF6" class="w-8 h-7 rounded border-0 bg-transparent cursor-pointer"><input type="text" placeholder="Auto" class="fmt-input flex-1"></div>
+        <div class="flex items-center gap-3"><label class="text-[10px] text-gray-400 w-16">Max</label><input type="color" id="cfmGradMax" value="#EF4444" class="w-8 h-7 rounded border-0 bg-transparent cursor-pointer"><input type="text" placeholder="Auto" class="fmt-input flex-1"></div>
+        <div id="cfmGradPreview" class="h-4 rounded-full mt-2" style="background:linear-gradient(to right,#3B82F6,#8B5CF6,#EF4444)"></div>
+      </div>
+      <div id="cfmFieldMode" class="hidden space-y-2">
+        <label class="text-[10px] text-gray-400">Color from field:</label>
+        <select id="cfmFieldSel" class="fmt-select w-full"></select>
+        <p class="text-[9px] text-gray-600">Field must contain color names or hex codes</p>
+      </div>
+      <div class="flex gap-3 pt-2 border-t border-white/5">
+        <button onclick="applyCondFmt()" class="flex-1 py-2.5 bg-gradient-to-r from-primary to-secondary rounded-xl font-bold text-sm">Apply</button>
+        <button onclick="closeCondFmt()" class="flex-1 py-2.5 border border-white/10 rounded-xl text-sm hover:bg-white/5">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+// ===== STATE =====
+const STATE = { pages:[], activePage:0, filters:{visual:{},page:{},report:{}} };
+let selectedVisuals=[], copiedVisual=null, selectedType='clustered-bar';
+let historyStack=[], histIdx=-1;
+let isReadingView=false, canvasZoom=1, interactionMode='select';
+let crossFilterActive=null;
+let numericFields=[], catFields=[], dateFields=[];
+let draggingField=null;
+const COLORS=['#8B5CF6','#3B82F6','#06B6D4','#22C55E','#F59E0B','#EF4444','#EC4899','#A78BFA'];
+const VISUAL_TYPES=[
+  {id:'clustered-bar',icon:'bar-chart-2',label:'Bar',fullLabel:'Clustered Bar Chart'},
+  {id:'stacked-bar',icon:'bar-chart-2',label:'S.Bar',fullLabel:'Stacked Bar Chart'},
+  {id:'100-bar',icon:'bar-chart-horizontal',label:'100%',fullLabel:'100% Stacked Bar Chart'},
+  {id:'clustered-col',icon:'bar-chart-2',label:'Col',fullLabel:'Clustered Column Chart'},
+  {id:'stacked-col',icon:'layers',label:'S.Col',fullLabel:'Stacked Column Chart'},
+  {id:'line',icon:'trending-up',label:'Line',fullLabel:'Line Chart'},
+  {id:'area',icon:'activity',label:'Area',fullLabel:'Area Chart'},
+  {id:'stacked-area',icon:'activity',label:'S.Area',fullLabel:'Stacked Area Chart'},
+  {id:'scatter',icon:'circle-dot',label:'Scatter',fullLabel:'Scatter Chart'},
+  {id:'bubble',icon:'circle',label:'Bubble',fullLabel:'Bubble Chart'},
+  {id:'pie',icon:'pie-chart',label:'Pie',fullLabel:'Pie Chart'},
+  {id:'donut',icon:'disc',label:'Donut',fullLabel:'Donut Chart'},
+  {id:'treemap',icon:'layout-grid',label:'Tree',fullLabel:'Treemap'},
+  {id:'funnel',icon:'filter',label:'Funnel',fullLabel:'Funnel Chart'},
+  {id:'gauge',icon:'gauge',label:'Gauge',fullLabel:'Gauge Chart'},
+  {id:'card',icon:'credit-card',label:'Card',fullLabel:'Single Card Visual'},
+  {id:'multi-card',icon:'layout-list',label:'M.Card',fullLabel:'Multi-row Card'},
+  {id:'table',icon:'table',label:'Table',fullLabel:'Data Table'},
+  {id:'matrix',icon:'grid-3x3',label:'Matrix',fullLabel:'Matrix / Pivot Table'},
+  {id:'waterfall',icon:'bar-chart-2',label:'Water',fullLabel:'Waterfall Chart'},
+  {id:'ribbon',icon:'git-branch',label:'Ribbon',fullLabel:'Ribbon Chart'},
+  {id:'combo',icon:'bar-chart-2',label:'Combo',fullLabel:'Line and Clustered Column Chart'},
+  {id:'histogram',icon:'bar-chart',label:'Histo',fullLabel:'Histogram Chart'},
+  {id:'boxplot',icon:'box',label:'Box',fullLabel:'Box and Whisker Plot'},
+  {id:'slicer',icon:'sliders',label:'Slicer',fullLabel:'Slicer / Filter Visual'}
+];
+const WELL_CONFIG={
+  'clustered-bar':['X Axis','Y Axis','Legend','Tooltips'],
+  'stacked-bar':['X Axis','Y Axis','Legend','Tooltips'],
+  '100-bar':['X Axis','Y Axis','Legend'],
+  'clustered-col':['X Axis','Y Axis','Legend','Tooltips'],
+  'stacked-col':['X Axis','Y Axis','Legend'],
+  'line':['X Axis','Y Axis','Secondary Y','Legend','Tooltips'],
+  'area':['X Axis','Y Axis','Legend','Tooltips'],
+  'stacked-area':['X Axis','Y Axis','Legend'],
+  'scatter':['X Axis','Y Axis','Values','Legend','Tooltips'],
+  'bubble':['X Axis','Y Axis','Values','Legend','Tooltips'],
+  'pie':['Legend','Values','Tooltips'],
+  'donut':['Legend','Values','Tooltips'],
+  'treemap':['Group','Values','Tooltips'],
+  'funnel':['Category','Values'],
+  'gauge':['Value','Minimum','Maximum','Target'],
+  'card':['Fields','Trend Axis'],
+  'multi-card':['Fields'],
+  'table':['Columns','Values'],
+  'matrix':['Rows','Columns','Values'],
+  'waterfall':['Category','Values','Breakdown'],
+  'ribbon':['X Axis','Y Axis','Legend'],
+  'combo':['X Axis','Y Axis','Line Y'],
+  'histogram':['Values'],
+  'boxplot':['Category','Values'],
+  'slicer':['Field']
+};
+
+// ===== INIT =====
+window.addEventListener('DOMContentLoaded',()=>{
+  loadState(); detectFields(); renderVisualGallery(); renderPageTabs(); renderCanvas();
+  initCanvasEvents(); initKeyboard(); initDragToCanvas(); initRibbonButtons(); lucide.createIcons();
+  pushHistory();
+});
+
+// ===== LOAD/SAVE STATE =====
+function loadState(){
+  const saved=localStorage.getItem('dm_dashboard_state');
+  if(saved){try{const p=JSON.parse(saved);STATE.pages=p.pages||[];STATE.activePage=p.activePage||0;STATE.filters=p.filters||{visual:{},page:{},report:{}};}catch(e){}}
+  if(!STATE.pages||STATE.pages.length===0){
+    const pgs=JSON.parse(localStorage.getItem('dm_dashboard_pages')||'["Page 1"]');
+    STATE.pages=pgs.map(n=>({name:n,visuals:[]}));
+  }
+}
+function saveState(){
+  localStorage.setItem('dm_dashboard_pages',JSON.stringify(STATE.pages.map(p=>p.name)));
+  localStorage.setItem('dm_dashboard_state',JSON.stringify(STATE));
+  showToast('Dashboard saved!','green');
+}
+function pushHistory(){
+  const snap=JSON.stringify(STATE.pages[STATE.activePage]?.visuals||[]);
+  historyStack=historyStack.slice(0,histIdx+1); historyStack.push(snap);
+  if(historyStack.length>50)historyStack.shift();
+  histIdx=historyStack.length-1;
+}
+function undo(){if(histIdx<=0)return;histIdx--;STATE.pages[STATE.activePage].visuals=JSON.parse(historyStack[histIdx]);renderCanvas();showToast('Undo','blue');}
+function redo(){if(histIdx>=historyStack.length-1)return;histIdx++;STATE.pages[STATE.activePage].visuals=JSON.parse(historyStack[histIdx]);renderCanvas();showToast('Redo','blue');}
+
+// ===== FIELD DETECTION =====
+function detectFields(){
+  const cols=JSON.parse(localStorage.getItem('dm_columns')||'[]');
+  const data=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+  numericFields=[]; catFields=[]; dateFields=[];
+  cols.forEach(col=>{
+    if(!data.length){catFields.push(col);return;}
+    const sample=data.slice(0,30).map(r=>r[col]).filter(v=>v!=null&&v!=='');
+    const nc=sample.filter(v=>!isNaN(parseFloat(v))).length;
+    const dc=sample.filter(v=>!isNaN(Date.parse(v))&&isNaN(parseFloat(v))).length;
+    if(nc/sample.length>0.7)numericFields.push(col);
+    else if(dc/sample.length>0.5)dateFields.push(col);
+    else catFields.push(col);
+  });
+  if(!cols.length){numericFields=['Revenue','Sales','Profit','Units'];catFields=['Region','Category','Product'];dateFields=['Date'];}
+  renderFieldsTab();
+}
+function renderFieldsTab(){
+  const sections=[
+    {el:'numericFieldsList',fields:numericFields,color:'#8B5CF6',lbl:'Numeric',icon:'Σ'},
+    {el:'catFieldsList',fields:catFields,color:'#3B82F6',lbl:'Categorical',icon:'A'},
+    {el:'dateFieldsList',fields:dateFields,color:'#06B6D4',lbl:'Date',icon:'📅'}
+  ];
+  sections.forEach(({el,fields,color,lbl,icon})=>{
+    const container=document.getElementById(el);
+    container.innerHTML=`<div class="text-[9px] text-gray-500 uppercase tracking-widest font-bold mb-1">${lbl}</div>`;
+    fields.forEach(f=>{
+      const d=document.createElement('div');
+      d.className='field-item'; d.draggable=true; d.dataset.field=f; d.dataset.fieldType=lbl.toLowerCase();
+      d.innerHTML=`<span class="field-dot" style="background:${color}"></span><span class="flex-1 truncate">${f}</span><span class="text-[9px] text-gray-600">${icon}</span>`;
+      d.addEventListener('dragstart',e=>{draggingField=f;e.dataTransfer.setData('text/plain',f);e.dataTransfer.setData('fieldType',lbl.toLowerCase());});
+      d.onclick=()=>autoAssignField(f,lbl.toLowerCase());
+      container.appendChild(d);
+    });
+  });
+}
+function autoAssignField(field,type){
+  if(!selectedVisuals.length){showToast('Select a visual to assign field','blue');return;}
+  const v=getVisual(selectedVisuals[0]); if(!v)return;
+  const wells=WELL_CONFIG[v.type]||['Values'];
+  let assigned=false;
+  // logic: if categorical/date -> X Axis/Category, if numeric -> Y Axis/Values
+  const targetWell = (type==='numeric') ? (wells.find(w=>w.includes('Values')||w.includes('Axis')) || wells[0]) : (wells.find(w=>w.includes('X Axis')||w.includes('Category')||w.includes('Rows')) || wells[0]);
+  if(targetWell){
+    v.fieldConfig[targetWell]=v.fieldConfig[targetWell]||[];
+    if(!v.fieldConfig[targetWell].includes(field)){
+      v.fieldConfig[targetWell].push(field); assigned=true;
+    }
+  }
+  if(assigned){ pushHistory(); renderVisualContent(v); updateFieldWells(); showToast('Assigned '+field+' to '+targetWell,'green'); }
+}
+
+// ===== VISUAL GALLERY =====
+function renderVisualGallery(){
+  const gallery=document.getElementById('visualGallery');
+  gallery.innerHTML='';
+  VISUAL_TYPES.forEach(vt=>{
+    const btn=document.createElement('button');
+    btn.className='visual-icon-btn'+(selectedType===vt.id?' sel-type':'');
+    btn.id='vbtn-'+vt.id;
+    btn.title=vt.fullLabel||vt.label;
+    
+    let iconHtml='';
+    const id=vt.id;
+    // Realist Icon Logic with Family Colors
+    if(id.includes('bar')){
+      iconHtml=`<div class="viz-mini-icon text-blue-400"><div class="viz-mini-bar" style="height:5px;opacity:0.4"></div><div class="viz-mini-bar" style="height:10px;opacity:0.7"></div><div class="viz-mini-bar" style="height:7px"></div></div>`;
+    } else if(id.includes('col') || id==='histogram' || id==='waterfall'){
+      iconHtml=`<div class="viz-mini-icon text-blue-400" style="flex-direction:row;align-items:flex-end;"><div class="viz-mini-bar" style="height:6px;width:2px;opacity:0.4"></div><div class="viz-mini-bar" style="height:10px;width:2px;opacity:0.7"></div><div class="viz-mini-bar" style="height:8px;width:2px"></div></div>`;
+    } else if(id==='line' || id.includes('area') || id==='ribbon'){
+      iconHtml=`<div class="viz-mini-icon text-purple-400" style="align-items:center;"><i data-lucide="${vt.icon}" class="w-3.5 h-3.5"></i></div>`;
+    } else if(id==='pie' || id==='donut' || id==='funnel' || id==='treemap'){
+      iconHtml=`<div class="viz-mini-icon text-orange-400" style="align-items:center;"><i data-lucide="${vt.icon}" class="w-3.5 h-3.5"></i></div>`;
+    } else if(id==='table' || id==='matrix' || id==='multi-card' || id==='card'){
+      iconHtml=`<div class="viz-mini-icon text-green-400" style="align-items:center;"><i data-lucide="${vt.icon}" class="w-3.5 h-3.5"></i></div>`;
+    } else if(id==='scatter' || id==='bubble' || id==='combo'){
+      iconHtml=`<div class="viz-mini-icon text-cyan-400" style="align-items:center;"><i data-lucide="${vt.icon}" class="w-3.5 h-3.5"></i></div>`;
+    } else if(id==='gauge' || id==='slicer'){
+      iconHtml=`<div class="viz-mini-icon text-yellow-400" style="align-items:center;"><i data-lucide="${vt.icon}" class="w-3.5 h-3.5"></i></div>`;
+    } else {
+      iconHtml=`<div class="viz-mini-icon text-gray-400" style="align-items:center;"><i data-lucide="${vt.icon}" class="w-3.5 h-3.5"></i></div>`;
+    }
+
+    btn.innerHTML=`${iconHtml}<span class="font-semibold" style="letter-spacing:-0.01em;">${vt.label}</span>`;
+    btn.onclick=()=>selectVisualType(vt.id);
+    gallery.appendChild(btn);
+  });
+  lucide.createIcons();
+}
+function selectVisualType(id){
+  if(selectedType===id){ clearSelectedType(); return; }
+  selectedType=id;
+  document.querySelectorAll('.visual-icon-btn').forEach(b=>b.classList.remove('sel-type'));
+  const btn=document.getElementById('vbtn-'+id);
+  if(btn)btn.classList.add('sel-type');
+  document.getElementById('builderCanvas').style.cursor='crosshair';
+  showToast('Click canvas to place '+id+' (Esc to cancel)','blue');
+}
+function clearSelectedType(){
+  selectedType=null;
+  document.querySelectorAll('.visual-icon-btn').forEach(b=>b.classList.remove('sel-type'));
+  document.getElementById('builderCanvas').style.cursor='';
+}
+
+// ===== PAGE TABS =====
+function renderPageTabs(){
+  const container=document.getElementById('pageTabs'); container.innerHTML='';
+  STATE.pages.forEach((pg,i)=>{
+    const pill=document.createElement('div');
+    pill.className='page-tab-pill'+(i===STATE.activePage?' active':'');
+    pill.textContent=pg.name; pill.dataset.pageIdx=i;
+    pill.onclick=()=>switchPage(i);
+    pill.addEventListener('contextmenu',e=>{e.preventDefault();showPageCtxMenu(e,i);});
+    container.appendChild(pill);
+  });
+}
+function switchPage(i){
+  STATE.activePage=i; selectedVisuals=[]; renderPageTabs(); renderCanvas(); updateRightPanel();
+}
+function addPage(){
+  const name=prompt('Page name:','Page '+(STATE.pages.length+1));
+  if(!name)return;
+  STATE.pages.push({name,visuals:[]}); STATE.activePage=STATE.pages.length-1;
+  renderPageTabs(); renderCanvas();
+}
+let pageCtxTarget=-1;
+function showPageCtxMenu(e,i){
+  pageCtxTarget=i;
+  const m=document.createElement('div'); m.className='ctx-menu'; m.id='pageCtxMenuDyn';
+  m.style.left=e.clientX+'px'; m.style.top=e.clientY+'px';
+  m.innerHTML=`<div class="ctx-item" onclick="renamePage(${i})"><i data-lucide="edit-3" class="w-3 h-3"></i>Rename</div>
+    <div class="ctx-item" onclick="duplicatePage(${i})"><i data-lucide="copy" class="w-3 h-3"></i>Duplicate</div>
+    <div class="ctx-item danger" onclick="deletePage(${i})"><i data-lucide="trash-2" class="w-3 h-3"></i>Delete</div>`;
+  document.body.appendChild(m); lucide.createIcons();
+  setTimeout(()=>document.addEventListener('click',()=>{m.remove();},{once:true}),50);
+}
+function renamePage(i){const n=prompt('Rename page:',STATE.pages[i].name);if(n){STATE.pages[i].name=n;renderPageTabs();}}
+function duplicatePage(i){STATE.pages.push({name:STATE.pages[i].name+' Copy',visuals:JSON.parse(JSON.stringify(STATE.pages[i].visuals))});renderPageTabs();}
+function deletePage(i){if(STATE.pages.length===1){showToast('Cannot delete last page','red');return;}STATE.pages.splice(i,1);if(STATE.activePage>=STATE.pages.length)STATE.activePage=STATE.pages.length-1;renderPageTabs();renderCanvas();}
+
+// ===== PANEL TABS =====
+function switchLeftTab(tab){
+  document.getElementById('buildTab').classList.toggle('hidden',tab!=='build');
+  document.getElementById('fieldsTab').classList.toggle('hidden',tab!=='fields');
+  document.getElementById('buildTab').classList.toggle('flex',tab==='build');
+  document.getElementById('fieldsTab').classList.toggle('flex',tab==='fields');
+  document.getElementById('buildTabBtn').classList.toggle('active',tab==='build');
+  document.getElementById('fieldsTabBtn').classList.toggle('active',tab==='fields');
+}
+function switchRightTab(tab){
+  ['format','filters','analytics'].forEach(t=>{
+    document.getElementById(t+'Tab').classList.toggle('hidden',t!==tab);
+    document.getElementById(t+'TabBtn').classList.toggle('active',t===tab);
+  });
+}
+
+// ===== RIBBON BUTTONS =====
+function initRibbonButtons(){
+  document.getElementById('addPageBtn').onclick=addPage;
+  document.getElementById('saveBtn').onclick=saveState;
+  document.getElementById('undoBtn').onclick=undo;
+  document.getElementById('redoBtn').onclick=redo;
+  document.getElementById('readingViewBtn').onclick=toggleReadingView;
+  document.getElementById('exportPdfBtn').onclick=exportPDF;
+}
+function toggleReadingView(){
+  isReadingView=!isReadingView;
+  const btn=document.getElementById('readingViewBtn');
+  btn.style.borderColor=isReadingView?'#06B6D4':'';
+  btn.style.color=isReadingView?'#06B6D4':'';
+  btn.innerHTML=isReadingView?'<i data-lucide="edit" class="w-3 h-3"></i>Edit Mode':'<i data-lucide="eye" class="w-3 h-3"></i>Reading View';
+  document.querySelectorAll('.tile-header').forEach(h=>h.style.cursor=isReadingView?'default':'move');
+  document.querySelectorAll('.resize-handle').forEach(h=>h.style.display=isReadingView?'none':'');
+  lucide.createIcons();
+  showToast(isReadingView?'Reading view':'Edit mode','blue');
+}
+function exportPDF(){window.print();}
+function setMode(m){
+  interactionMode=m;
+  document.getElementById('selectModeBtn').style.borderColor=m==='select'?'#8B5CF6':'';
+  document.getElementById('crossFilterBtn').style.borderColor=m==='crossfilter'?'#8B5CF6':'';
+}
+function showToast(msg,color){
+  const t=document.getElementById('toast');
+  const map={green:'border-green-500/40 text-green-400',blue:'border-blue-500/40 text-blue-300',red:'border-red-500/40 text-red-400'};
+  t.className='fixed bottom-6 right-6 z-[9999] glass border px-5 py-3 rounded-xl shadow-2xl text-sm font-bold max-w-xs '+(map[color]||'border-white/10');
+  t.textContent=msg; t.classList.remove('hidden');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.add('hidden'),2500);
+}
+function openAIMeasure(){document.getElementById('aiMeasureModal').classList.remove('hidden');}
+
+function addAnalytic(type){showToast('Added '+type+' to selected visual','blue');}
+function addTextBox(){placeVisual('card',null,null,true);}
+function addShape(type){placeVisual('card',null,null,false);}
+</script>
+<script>
+// ===== CANVAS RENDER =====
+function renderCanvas(){
+  const canvas=document.getElementById('builderCanvas');
+  canvas.innerHTML='';
+  const visuals=STATE.pages[STATE.activePage]?.visuals||[];
+  visuals.forEach(v=>createTileDOM(v));
+  lucide.createIcons();
+}
+function genId(){return 'v_'+Math.random().toString(36).substr(2,9);}
+function currentPage(){return STATE.pages[STATE.activePage]||(STATE.pages[0]);}
+
+// ===== PLACE VISUAL =====
+function placeVisual(type,x,y){
+  const snap=document.getElementById('gridSnapToggle').checked;
+  let px=Math.max(0,x??200), py=Math.max(0,y??120);
+  if(snap){px=Math.round(px/24)*24; py=Math.round(py/24)*24;}
+  py=Math.max(0,py);
+  // Clear selectedType after placement so next canvas click deselects only
+  const usedType = type || selectedType;
+  clearSelectedType();
+  const v={id:genId(),type:usedType,x:px,y:py,w:400,h:280,
+    title:VISUAL_TYPES.find(t=>t.id===usedType)?.label||'Visual',
+    fieldConfig:{},formatConfig:{color:'#8B5CF6',legend:true,labels:false,radius:12},
+    slicerValues:[]
+  };
+  currentPage().visuals.push(v); pushHistory(); createTileDOM(v); selectVisual(v.id);
+  lucide.createIcons();
+}
+function createTileDOM(v){
+  const canvas=document.getElementById('builderCanvas');
+  const tile=document.createElement('div');
+  tile.className='visual-tile'; tile.id='tile-'+v.id;
+  tile.style.cssText=`left:${v.x}px;top:${v.y}px;width:${v.w}px;height:${v.h}px;border-radius:${v.formatConfig?.radius||12}px;`;
+  tile.innerHTML=`
+    <div class="tile-header" id="th-${v.id}">
+      <span id="title-${v.id}" ondblclick="editTitle('${v.id}')" style="cursor:text;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:calc(100% - 40px)">${v.title}</span>
+      <span class="flex items-center gap-1">
+        <button onclick="showSortMenu(event,'${v.id}')" class="p-0.5 text-gray-600 hover:text-white"><i data-lucide="list-filter" class="w-3 h-3"></i></button>
+        <button onclick="showTileCtxMenu(event,'${v.id}')" class="p-0.5 text-gray-600 hover:text-white"><i data-lucide="more-horizontal" class="w-3 h-3"></i></button>
+      </span>
+    </div>
+    <div class="tile-body" id="body-${v.id}"></div>
+    <div class="resize-handle rh-nw" data-dir="nw" data-vid="${v.id}"></div>
+    <div class="resize-handle rh-n"  data-dir="n"  data-vid="${v.id}"></div>
+    <div class="resize-handle rh-ne" data-dir="ne" data-vid="${v.id}"></div>
+    <div class="resize-handle rh-e"  data-dir="e"  data-vid="${v.id}"></div>
+    <div class="resize-handle rh-se" data-dir="se" data-vid="${v.id}"></div>
+    <div class="resize-handle rh-s"  data-dir="s"  data-vid="${v.id}"></div>
+    <div class="resize-handle rh-sw" data-dir="sw" data-vid="${v.id}"></div>
+    <div class="resize-handle rh-w"  data-dir="w"  data-vid="${v.id}"></div>`;
+  tile.addEventListener('mousedown',e=>onTileMouseDown(e,v.id));
+  tile.addEventListener('click',e=>e.stopPropagation());
+  tile.addEventListener('contextmenu',e=>{e.preventDefault();selectVisual(v.id);showTileCtxMenu(e,v.id);});
+  canvas.appendChild(tile);
+  renderVisualContent(v);
+}
+function editTitle(id){
+  const el=document.getElementById('title-'+id);
+  el.contentEditable=true; el.focus();
+  el.onblur=()=>{
+    el.contentEditable=false;
+    const v=getVisual(id); if(v){v.title=el.textContent.trim()||v.title; pushHistory();}
+  };
+}
+function getVisual(id){return currentPage().visuals.find(v=>v.id===id);}
+
+// ===== SELECT VISUAL =====
+function selectVisual(id){
+  selectedVisuals=[id];
+  document.querySelectorAll('.visual-tile').forEach(t=>{t.classList.remove('selected');t.style.zIndex='1';});
+  const tile=document.getElementById('tile-'+id);
+  if(tile){tile.classList.add('selected');tile.style.zIndex='10';}
+  updateRightPanel(); updateFieldWells();
+}
+function deselectAll(){
+  selectedVisuals=[];
+  document.querySelectorAll('.visual-tile').forEach(t=>t.classList.remove('selected'));
+  updateRightPanel(); updateFieldWells();
+}
+function selectAll(){selectedVisuals=currentPage().visuals.map(v=>v.id);document.querySelectorAll('.visual-tile').forEach(t=>t.classList.add('selected'));}
+
+// ===== DRAG TILES =====
+let _drag={active:false,vid:null,startX:0,startY:0,origX:0,origY:0};
+let _resize={active:false,vid:null,dir:'',startX:0,startY:0,origW:0,origH:0,origX:0,origY:0};
+function onTileMouseDown(e,id){
+  if(isReadingView)return;
+  e.stopPropagation(); // always block canvas deselect
+  if(e.target.classList.contains('resize-handle')){
+    const v=getVisual(id); if(!v)return;
+    _resize={active:true,vid:id,dir:e.target.dataset.dir,startX:e.clientX,startY:e.clientY,
+      origW:v.w,origH:v.h,origX:v.x,origY:v.y};
+    e.stopPropagation(); e.preventDefault(); return;
+  }
+  // Always select on any tile click
+  selectVisual(id);
+  if(interactionMode==='crossfilter'){handleCrossFilterClick(id,e);return;}
+  // Only drag from header
+  if(e.target.closest('.tile-header')){
+    const v=getVisual(id); if(!v)return;
+    _drag={active:true,vid:id,startX:e.clientX,startY:e.clientY,origX:v.x,origY:v.y};
+    e.preventDefault();
+  }
+}
+window.addEventListener('mousemove',e=>{
+  if(_drag.active){
+    const v=getVisual(_drag.vid); if(!v)return;
+    const snap=document.getElementById('gridSnapToggle').checked;
+    let nx=_drag.origX+(e.clientX-_drag.startX);
+    let ny=_drag.origY+(e.clientY-_drag.startY);
+    if(snap){nx=Math.round(nx/24)*24;ny=Math.round(ny/24)*24;}
+    v.x=Math.max(0,nx); v.y=Math.max(0,ny);
+    const tile=document.getElementById('tile-'+_drag.vid);
+    if(tile){tile.style.left=v.x+'px';tile.style.top=v.y+'px';}
+  }
+  if(_resize.active){
+    const v=getVisual(_resize.vid); if(!v)return;
+    const dx=e.clientX-_resize.startX, dy=e.clientY-_resize.startY;
+    const d=_resize.dir;
+    const snap=document.getElementById('gridSnapToggle').checked;
+    let nw=_resize.origW, nh=_resize.origH, nx=_resize.origX, ny=_resize.origY;
+    if(d.includes('e'))nw=Math.max(120,_resize.origW+dx);
+    if(d.includes('s'))nh=Math.max(80,_resize.origH+dy);
+    if(d.includes('w')){nw=Math.max(120,_resize.origW-dx);nx=_resize.origX+(_resize.origW-nw);}
+    if(d.includes('n')){nh=Math.max(80,_resize.origH-dy);ny=_resize.origY+(_resize.origH-nh);ny=Math.max(0,ny);}
+    if(snap){nw=Math.round(nw/24)*24;nh=Math.round(nh/24)*24;nx=Math.round(nx/24)*24;ny=Math.max(0,Math.round(ny/24)*24);}
+    v.w=nw;v.h=nh;v.x=nx;v.y=ny;
+    const tile=document.getElementById('tile-'+_resize.vid);
+    if(tile){tile.style.cssText+=`left:${nx}px;top:${ny}px;width:${nw}px;height:${nh}px;`;}
+  }
+});
+window.addEventListener('mouseup',e=>{
+  if(_drag.active){_drag.active=false;pushHistory();renderVisualContent(getVisual(_drag.vid));}
+  if(_resize.active){_resize.active=false;pushHistory();renderVisualContent(getVisual(_resize.vid));}
+});
+
+// ===== CANVAS EVENTS =====
+function initCanvasEvents(){
+  const canvas=document.getElementById('builderCanvas');
+  canvas.addEventListener('click',e=>{
+    if(e.target===canvas||e.target.id==='builderCanvas'){
+      if(selectedType&&!isReadingView){
+        const rect=canvas.getBoundingClientRect();
+        const wrapper=document.getElementById('canvasWrapper');
+        const x=e.clientX-rect.left+wrapper.scrollLeft;
+        const y=e.clientY-rect.top+wrapper.scrollTop;
+        placeVisual(selectedType,Math.max(0,x-200),Math.max(0,y-140));
+        // selectedType already cleared inside placeVisual
+      } else {
+        deselectAll();
+      }
+    }
+  });
+  canvas.addEventListener('contextmenu',e=>{
+    if(e.target===canvas){e.preventDefault();showCanvasCtxMenu(e);}
+  });
+}
+function showCanvasCtxMenu(e){
+  const m=document.getElementById('canvasCtxMenu');
+  m.style.left=e.clientX+'px'; m.style.top=e.clientY+'px'; m.classList.remove('hidden');
+  setTimeout(()=>document.addEventListener('click',()=>m.classList.add('hidden'),{once:true}),50);
+}
+function showTileCtxMenu(e,id){
+  selectVisual(id);
+  const m=document.getElementById('tileCtxMenu');
+  m.style.left=e.clientX+'px'; m.style.top=e.clientY+'px'; m.classList.remove('hidden');
+  setTimeout(()=>document.addEventListener('click',()=>m.classList.add('hidden'),{once:true}),50);
+}
+
+// ===== KEYBOARD =====
+function initKeyboard(){
+  document.addEventListener('keydown',e=>{
+    if(e.ctrlKey&&e.key==='z'){e.preventDefault();undo();}
+    else if(e.ctrlKey&&e.key==='y'){e.preventDefault();redo();}
+    else if(e.ctrlKey&&e.key==='s'){e.preventDefault();saveState();}
+    else if(e.ctrlKey&&e.key==='c'){copySelectedVisual();}
+    else if(e.ctrlKey&&e.key==='v'){pasteVisual();}
+    else if(e.key==='Delete'||e.key==='Backspace'){
+      if(document.activeElement===document.body)deleteSelectedVisual();
+    }
+    else if(e.key==='Escape'){
+      if(selectedType){clearSelectedType();showToast('Placement cancelled','blue');}
+      else deselectAll();
+    }
+    else if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)&&selectedVisuals.length){
+      e.preventDefault(); const d=e.shiftKey?10:1;
+      selectedVisuals.forEach(id=>{
+        const v=getVisual(id); if(!v)return;
+        if(e.key==='ArrowLeft')v.x=Math.max(0,v.x-d); if(e.key==='ArrowRight')v.x+=d;
+        if(e.key==='ArrowUp')v.y=Math.max(0,v.y-d); if(e.key==='ArrowDown')v.y+=d;
+        const tile=document.getElementById('tile-'+id);
+        if(tile){tile.style.left=v.x+'px';tile.style.top=v.y+'px';}
+      });
+    }
+  });
+}
+
+// ===== CANVAS ZOOM =====
+function zoomCanvas(factor){
+  canvasZoom=Math.max(0.3,Math.min(3,canvasZoom*factor));
+  document.getElementById('builderCanvas').style.transform=`scale(${canvasZoom})`;
+  document.getElementById('builderCanvas').style.transformOrigin='top left';
+}
+function fitCanvas(){canvasZoom=1;document.getElementById('builderCanvas').style.transform='scale(1)';}
+
+// ===== DRAG FIELDS TO CANVAS =====
+function initDragToCanvas(){
+  const canvas=document.getElementById('builderCanvas');
+  canvas.addEventListener('dragover',e=>e.preventDefault());
+  canvas.addEventListener('drop',e=>{
+    e.preventDefault();
+    const field=e.dataTransfer.getData('text/plain'); if(!field)return;
+    if(selectedVisuals.length>0){
+      const v=getVisual(selectedVisuals[0]); if(!v)return;
+      const wells=WELL_CONFIG[v.type]||['Values'];
+      const well=wells[0];
+      if(!v.fieldConfig[well])v.fieldConfig[well]=[];
+      if(!v.fieldConfig[well].includes(field)){v.fieldConfig[well].push(field);pushHistory();renderVisualContent(v);updateFieldWells();}
+    } else {
+      const rect=canvas.getBoundingClientRect();
+      const wrapper=document.getElementById('canvasWrapper');
+      const x=e.clientX-rect.left+wrapper.scrollLeft;
+      const y=e.clientY-rect.top+wrapper.scrollTop;
+      placeVisual(selectedType,x-200,y-140);
+    }
+  });
+}
+
+// ===== FIELD WELLS =====
+function updateFieldWells(){
+  const section=document.getElementById('fieldWellsSection');
+  const wellsDiv=document.getElementById('fieldWells');
+  if(!selectedVisuals.length){section.classList.add('hidden');return;}
+  const v=getVisual(selectedVisuals[0]); if(!v){section.classList.add('hidden');return;}
+  section.classList.remove('hidden');
+  const wells=WELL_CONFIG[v.type]||['Values'];
+  wellsDiv.innerHTML='';
+  wells.forEach(wName=>{
+    const wr=document.createElement('div');
+    wr.innerHTML=`<div class="text-[9px] text-gray-500 mb-0.5">${wName}</div>`;
+    const zone=document.createElement('div'); zone.className='well-zone';
+    const fields=v.fieldConfig[wName]||[];
+    if(fields.length){
+      fields.forEach(f=>{
+        const chip=document.createElement('div'); chip.className='field-chip';
+        chip.innerHTML=`<span>${f}</span><select class="bg-transparent text-[8px] outline-none cursor-pointer ml-1" onchange="setAgg('${v.id}','${wName}','${f}',this.value)"><option>Sum</option><option>Avg</option><option>Count</option><option>Min</option><option>Max</option></select><button onclick="removeField('${v.id}','${wName}','${f}')" class="ml-1 text-gray-500 hover:text-red-400">x</button>`;
+        zone.appendChild(chip);
+      });
+    } else {zone.textContent='Drop fields here';}
+    zone.addEventListener('dragover',e=>e.preventDefault());
+    zone.addEventListener('dragenter',()=>zone.classList.add('drag-over'));
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault(); zone.classList.remove('drag-over');
+      const field=e.dataTransfer.getData('text/plain'); if(!field)return;
+      if(!v.fieldConfig[wName])v.fieldConfig[wName]=[];
+      if(!v.fieldConfig[wName].includes(field)){v.fieldConfig[wName].push(field);pushHistory();renderVisualContent(v);updateFieldWells();}
+    });
+    wr.appendChild(zone); wellsDiv.appendChild(wr);
+  });
+}
+function removeField(vid,well,field){
+  const v=getVisual(vid); if(!v)return;
+  v.fieldConfig[well]=(v.fieldConfig[well]||[]).filter(f=>f!==field);
+  pushHistory(); renderVisualContent(v); updateFieldWells();
+}
+function setAgg(vid,well,field,agg){const v=getVisual(vid);if(!v)return;if(!v.aggConfig)v.aggConfig={};v.aggConfig[well+'_'+field]=agg;renderVisualContent(v);}
+</script>
+<script>
+// ===== CHART RENDERING =====
+const chartInstances={};
+function renderVisualContent(v){
+  if(!v)return;
+  const body=document.getElementById('body-'+v.id); if(!body)return;
+  body.innerHTML='';
+  const data=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+  const color=v.formatConfig?.color||'#8B5CF6';
+  const showLegend=v.formatConfig?.legend!==false;
+  const showLabels=v.formatConfig?.labels===true;
+  if(v.type==='card'||v.type==='multi-card'){renderCard(v,body,data,color);return;}
+  if(v.type==='table'||v.type==='matrix'){renderTable(v,body,data);return;}
+  if(v.type==='slicer'){renderSlicer(v,body,data);return;}
+  if(v.type==='gauge'){renderGauge(v,body,data,color);return;}
+  const canvas=document.createElement('canvas');
+  canvas.id='chart-canvas-'+v.id;
+  canvas.style.cssText='width:100%;height:100%;';
+  body.appendChild(canvas);
+  if(chartInstances[v.id]){chartInstances[v.id].destroy();delete chartInstances[v.id];}
+  const cfg=buildChartConfig(v,data,color,showLegend,showLabels);
+  if(cfg){
+    Chart.defaults.color='#9CA3AF';Chart.defaults.font.family='Inter';
+    chartInstances[v.id]=new Chart(canvas.getContext('2d'),cfg);
+  }
+}
+function getDataset(){
+  const raw=localStorage.getItem('dm_dataset'); return raw?JSON.parse(raw):[];
+}
+function getActiveFilter(){
+  const page=STATE.pages[STATE.activePage];
+  const pf=STATE.filters.page||{}; const rf=STATE.filters.report||{};
+  return {...pf,...rf};
+}
+function applyFilters(data,excludeId){
+  let d=[...data];
+  const cf=crossFilterActive;
+  if(cf&&cf.vid!==excludeId){
+    d=d.filter(row=>String(row[cf.field])===String(cf.value));
+  }
+  const pf=getActiveFilter();
+  Object.entries(pf).forEach(([field,vals])=>{if(vals&&vals.length)d=d.filter(r=>vals.includes(String(r[field])));});
+  return d;
+}
+function buildChartConfig(v,rawData,color,showLegend,showLabels){
+  const data=applyFilters(rawData,v.id);
+  const wells=WELL_CONFIG[v.type]||[];
+  const xWell=wells.includes('X Axis')?'X Axis':(wells.includes('Category')?'Category':'Legend');
+  const yWell=wells.includes('Y Axis')?'Y Axis':'Values';
+  const xFields=v.fieldConfig[xWell]||[];
+  const yFields=v.fieldConfig[yWell]||[];
+  const xField=xFields[0]||(catFields[0]||numericFields[0]);
+  const yField=yFields[0]||(numericFields[0]||catFields[0]);
+  const baseOpts={responsive:true,maintainAspectRatio:false,animation:{duration:600},
+    plugins:{legend:{display:showLegend,labels:{color:'#9CA3AF',boxWidth:10,padding:10}},
+      datalabels:showLabels?{color:'#fff',font:{size:9}}:false},
+    scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6B7280',font:{size:9}}},
+      y:{beginAtZero:true,grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6B7280',font:{size:9}}}}};
+  if(['pie','donut'].includes(v.type)){
+    const lgF=v.fieldConfig['Legend']?.[0]||(catFields[0]||'');
+    const vF=v.fieldConfig['Values']?.[0]||(numericFields[0]||'');
+    const freq={};
+    if(lgF){data.forEach(r=>{const k=String(r[lgF]||'Other');freq[k]=(freq[k]||0)+(vF?parseFloat(r[vF])||1:1);});}
+    else{data.slice(0,6).forEach((_,i)=>freq['Item '+(i+1)]=Math.round(Math.random()*100+20));}
+    const entries=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    return{type:'doughnut',data:{labels:entries.map(e=>e[0]),datasets:[{data:entries.map(e=>e[1]),backgroundColor:COLORS,borderWidth:0,hoverOffset:8}]},
+      options:{...baseOpts,cutout:v.type==='donut'?'65%':'0%',scales:{}}};
+  }
+  if(v.type==='scatter'||v.type==='bubble'){
+    const x2=v.fieldConfig['X Axis']?.[0]||(numericFields[0]||'');
+    const y2=v.fieldConfig['Y Axis']?.[0]||(numericFields[1]||numericFields[0]||'');
+    const pts=data.map(r=>({x:parseFloat(r[x2])||0,y:parseFloat(r[y2])||0,r:v.type==='bubble'?5+Math.random()*15:4})).filter(p=>!isNaN(p.x)&&!isNaN(p.y)).slice(0,150);
+    return{type:'bubble',data:{datasets:[{label:x2+' vs '+y2,data:pts,backgroundColor:color+'99',borderColor:color}]},options:baseOpts};
+  }
+  if(v.type==='line'||v.type==='area'){
+    const labels=data.slice(0,20).map(r=>String(r[xField]||''));
+    const vals=data.slice(0,20).map(r=>parseFloat(r[yField])||0);
+    const yFields2=v.fieldConfig['Y Axis']||[];
+    const datasets=yFields2.length?yFields2.map((f,i)=>({label:f,data:data.slice(0,20).map(r=>parseFloat(r[f])||0),borderColor:COLORS[i%COLORS.length],backgroundColor:COLORS[i%COLORS.length]+'22',fill:v.type==='area',tension:0.4,borderWidth:2,pointRadius:3})):
+      [{label:yField,data:vals,borderColor:color,backgroundColor:color+'22',fill:v.type==='area',tension:0.4,borderWidth:2,pointRadius:3}];
+    return{type:'line',data:{labels,datasets},options:{...baseOpts,onClick:(e,el,chart)=>handleChartClick(e,el,chart,v,xField)}};
+  }
+  if(v.type==='histogram'){
+    const vF=v.fieldConfig['Values']?.[0]||(numericFields[0]||'');
+    const nums=data.map(r=>parseFloat(r[vF])).filter(n=>!isNaN(n));
+    if(!nums.length)return null;
+    const mn=Math.min(...nums),mx=Math.max(...nums),step=(mx-mn)/8||1;
+    const bins=Array.from({length:8},(_,i)=>({label:`${(mn+i*step).toFixed(1)}`+'-'+(mn+(i+1)*step).toFixed(1),count:0}));
+    nums.forEach(n=>{const idx=Math.min(Math.floor((n-mn)/step),7);bins[idx].count++;});
+    return{type:'bar',data:{labels:bins.map(b=>b.label),datasets:[{label:'Frequency',data:bins.map(b=>b.count),backgroundColor:color+'99',borderColor:color,borderWidth:1,borderRadius:4}]},options:baseOpts};
+  }
+  // Default: bar/stacked/col/waterfall/funnel/ribbon/combo
+  const freqX={};
+  if(xField&&data.length){
+    data.forEach(r=>{const k=String(r[xField]||'Unknown');freqX[k]=(freqX[k]||0)+(yField?parseFloat(r[yField])||1:1);});
+  } else {['A','B','C','D','E'].forEach(k=>{freqX[k]=Math.round(Math.random()*100+20);});}
+  const entries=Object.entries(freqX).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const isHoriz=['100-bar','stacked-bar','clustered-bar'].includes(v.type)&&false;
+  const isStacked=['stacked-bar','stacked-col','stacked-area'].includes(v.type);
+  const datasets=[{label:yField||'Value',data:entries.map(e=>e[1]),backgroundColor:color+'BB',borderColor:color,borderWidth:1,borderRadius:4}];
+  if(v.type==='combo'){
+    const lineF=v.fieldConfig['Line Y']?.[0]||(numericFields[1]||numericFields[0]);
+    if(lineF){
+      const lineData=entries.map(([k])=>{const row=data.find(r=>String(r[xField])===k);return row?parseFloat(row[lineF])||0:0;});
+      datasets.push({type:'line',label:lineF,data:lineData,borderColor:'#06B6D4',backgroundColor:'transparent',tension:0.4,borderWidth:2,yAxisID:'y1'});
+    }
+  }
+  const extraScales=v.type==='combo'?{y1:{type:'linear',display:true,position:'right',grid:{drawOnChartArea:false},ticks:{color:'#06B6D4',font:{size:9}}}}:{};
+  return{type:'bar',data:{labels:entries.map(e=>e[0]),datasets},
+    options:{...baseOpts,indexAxis:isHoriz?'y':'x',scales:{...baseOpts.scales,...extraScales,x:{...baseOpts.scales.x,stacked:isStacked},y:{...baseOpts.scales.y,stacked:isStacked}},
+      onClick:(evt,el,chart)=>handleChartClick(evt,el,chart,v,xField)}};
+}
+function handleChartClick(evt,elements,chart,v,xField){
+  if(interactionMode!=='crossfilter'||!elements.length)return;
+  const idx=elements[0].index;
+  const label=chart.data.labels[idx];
+  if(crossFilterActive&&crossFilterActive.vid===v.id&&crossFilterActive.value===label){
+    crossFilterActive=null; showToast('Filter cleared','blue');
+  } else {
+    crossFilterActive={vid:v.id,field:xField,value:label};
+    showToast('Filtering: '+xField+' = '+label,'blue');
+  }
+  applyCrossFilter();
+}
+function applyCrossFilter(){
+  const visuals=currentPage().visuals;
+  visuals.forEach(v=>{
+    const tile=document.getElementById('tile-'+v.id);
+    if(!tile)return;
+    if(crossFilterActive&&crossFilterActive.vid!==v.id){
+      tile.style.opacity='0.6';
+    } else {tile.style.opacity='1';}
+    if(v.id!==crossFilterActive?.vid)renderVisualContent(v);
+  });
+}
+function renderCard(v,body,data,color){
+  const fields=v.fieldConfig['Fields']||[];
+  if(!fields.length&&!data.length){
+    body.innerHTML=`<div class="flex flex-col items-center justify-center h-full"><div class="text-3xl font-bold" style="color:${color}">--</div><div class="text-[10px] text-gray-500 mt-1">KPI Card</div></div>`;return;
+  }
+  const field=fields[0]||(numericFields[0]||'');
+  const nums=data.map(r=>parseFloat(r[field])).filter(n=>!isNaN(n));
+  const val=nums.reduce((a,b)=>a+b,0);
+  const fmt=val>1e6?(val/1e6).toFixed(1)+'M':val>1e3?(val/1e3).toFixed(1)+'K':val.toFixed(0);
+  body.innerHTML=`<div class="flex flex-col items-center justify-center h-full gap-1">
+    <div class="text-[10px] text-gray-500 uppercase tracking-widest">${field||'Value'}</div>
+    <div class="text-3xl font-bold font-['Outfit']" style="color:${color}">${fmt}</div>
+    <div class="text-[9px] text-green-400">+2.4% vs last period</div>
+  </div>`;
+}
+function renderTable(v,body,data){
+  const colFields=v.fieldConfig['Columns']||v.fieldConfig['Rows']||[];
+  const valFields=v.fieldConfig['Values']||[];
+  const allFields=[...colFields,...valFields];
+  const cols=allFields.length?allFields:(JSON.parse(localStorage.getItem('dm_columns')||'[]').slice(0,5));
+  if(!cols.length){body.innerHTML='<p class="text-[10px] text-gray-600 p-2">Drop columns into field wells</p>';return;}
+  const rows=applyFilters(data,v.id).slice(0,50);
+  let html='<div class="overflow-auto h-full"><table class="w-full text-[10px] border-collapse"><thead><tr>';
+  cols.forEach(c=>{html+=`<th class="text-left px-2 py-1 text-gray-500 border-b border-white/5 sticky top-0 bg-dark/90">${c}</th>`;});
+  html+='</tr></thead><tbody>';
+  rows.forEach(r=>{html+='<tr class="hover:bg-white/5 transition-colors">';cols.forEach(c=>{html+=`<td class="px-2 py-1 border-b border-white/5 truncate" style="max-width:80px">${r[c]??''}</td>`;});html+='</tr>';});
+  html+='</tbody></table></div>';
+  body.innerHTML=html;
+}
+function renderSlicer(v,body,data){
+  const fields=v.fieldConfig['Field']||[];
+  const field=fields[0]||(catFields[0]||numericFields[0]);
+  if(!field){body.innerHTML='<p class="text-[10px] text-gray-600 p-2">Drop a field here</p>';return;}
+  const isDate=(window.DM_TYPES&&window.DM_TYPES[field]==='date')||dateFields.includes(field);
+  const isNumeric=!isDate&&numericFields.includes(field);
+
+  // ── Shared clear helper ──
+  function clearSlicerCF(){
+    delete window.DM_CROSSFILTER.active[v.id];
+    if(typeof refreshAllVisuals==='function')refreshAllVisuals();
+    if(typeof updateCrossFilterBar==='function')updateCrossFilterBar();
+  }
+
+  if(isDate){
+    body.innerHTML=`<div class="p-3 space-y-2">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="text-[10px] text-gray-400">${field}</span>
+        <button id="slr-clr-${v.id}" style="font-size:9px;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;" onmouseover="this.style.color='#8B5CF6'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Clear</button>
+      </div>
+      <div class="text-[9px] text-gray-500">From</div>
+      <input type="date" id="slr-from-${v.id}" class="fmt-input w-full" style="font-size:11px;color-scheme:dark;padding:3px 6px;" onchange="onSlicerDate('${v.id}','${field}')">
+      <div class="text-[9px] text-gray-500">To</div>
+      <input type="date" id="slr-to-${v.id}" class="fmt-input w-full" style="font-size:11px;color-scheme:dark;padding:3px 6px;" onchange="onSlicerDate('${v.id}','${field}')">
+    </div>`;
+    document.getElementById('slr-clr-'+v.id)?.addEventListener('click',()=>{
+      document.getElementById('slr-from-'+v.id).value='';
+      document.getElementById('slr-to-'+v.id).value='';
+      if(!STATE.filters.page)STATE.filters.page={};
+      delete STATE.filters.page['_date_'+field];
+      clearSlicerCF();
+    });
+    return;
+  }
+
+  if(isNumeric){
+    const nums=data.map(r=>parseFloat(r[field])).filter(n=>!isNaN(n));
+    const mn=Math.floor(Math.min(...nums)||0), mx=Math.ceil(Math.max(...nums)||100);
+    body.innerHTML=`<div class="p-3 space-y-2">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span class="text-[10px] text-gray-400">${field}: <span id="slr-val-${v.id}">${mn} – ${mx}</span></span>
+        <button id="slr-clr-${v.id}" style="font-size:9px;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;" onmouseover="this.style.color='#8B5CF6'" onmouseout="this.style.color='rgba(255,255,255,.35)'">Clear</button>
+      </div>
+      <input type="range" min="${mn}" max="${mx}" value="${mn}" class="w-full accent-primary" oninput="onSlicerRange('${v.id}','${field}',${mn},${mx},this.value,'min')">
+      <input type="range" min="${mn}" max="${mx}" value="${mx}" class="w-full accent-primary" oninput="onSlicerRange('${v.id}','${field}',${mn},${mx},this.value,'max')">
+    </div>`;
+    document.getElementById('slr-clr-'+v.id)?.addEventListener('click',()=>{
+      _slicerMin[v.id]=mn; _slicerMax[v.id]=mx;
+      body.querySelectorAll('input[type=range]').forEach((r,i)=>{r.value=i===0?mn:mx;});
+      const el=document.getElementById('slr-val-'+v.id); if(el)el.textContent=mn+' – '+mx;
+      if(!STATE.filters.page)STATE.filters.page={}; delete STATE.filters.page['_range_'+field];
+      clearSlicerCF();
+    });
+    return;
+  }
+
+  // Categorical
+  const vals=[...new Set(data.map(r=>String(r[field]||'')).filter(Boolean))].slice(0,50);
+  body.innerHTML=`<div class="p-2" style="display:flex;flex-direction:column;height:100%;">
+    <div style="display:flex;gap:6px;padding:2px 4px 6px;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:4px;flex-shrink:0;">
+      <button id="slr-all-${v.id}" style="font-size:10px;color:#8B5CF6;background:none;border:none;cursor:pointer;">All</button>
+      <button id="slr-clr-${v.id}" style="font-size:10px;color:rgba(255,255,255,.3);background:none;border:none;cursor:pointer;">Clear</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;">
+      ${vals.map(val=>`<label class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/5 cursor-pointer text-[10px]">
+        <input type="checkbox" class="accent-primary slicer-chk" data-vid="${v.id}" data-field="${field}" data-val="${val}" onchange="onSlicerCheck('${v.id}','${field}')">
+        <span>${val}</span></label>`).join('')}
+    </div>
+  </div>`;
+  document.getElementById('slr-all-'+v.id)?.addEventListener('click',()=>{
+    body.querySelectorAll('.slicer-chk').forEach(c=>c.checked=false);
+    if(!STATE.filters.page)STATE.filters.page={}; delete STATE.filters.page[field];
+    clearSlicerCF();
+  });
+  document.getElementById('slr-clr-'+v.id)?.addEventListener('click',()=>{
+    body.querySelectorAll('.slicer-chk').forEach(c=>c.checked=false);
+    if(!STATE.filters.page)STATE.filters.page={}; delete STATE.filters.page[field];
+    clearSlicerCF();
+  });
+}
+function onSlicerCheck(vid,field){
+  const checked=[...document.querySelectorAll(`.slicer-chk[data-vid="${vid}"][data-field="${field}"]:checked`)].map(el=>el.dataset.val);
+  if(!STATE.filters.page)STATE.filters.page={};
+  if(checked.length)STATE.filters.page[field]=checked; else delete STATE.filters.page[field];
+  // Dispatch to DM_CROSSFILTER
+  if(window.DM_CROSSFILTER){
+    if(checked.length){
+      window.DM_CROSSFILTER.active[vid]={field,value:checked[0],label:field+': '+(checked.length===1?checked[0]:checked.slice(0,2).join(', ')+(checked.length>2?' +'+(checked.length-2):''))};
+    } else { delete window.DM_CROSSFILTER.active[vid]; }
+  }
+  if(typeof refreshAllVisuals==='function')refreshAllVisuals();
+  else currentPage().visuals.filter(v=>v.id!==vid).forEach(v=>renderVisualContent(v));
+}
+function onSlicerDate(vid,field){
+  const from=document.getElementById('slr-from-'+vid)?.value||'';
+  const to=document.getElementById('slr-to-'+vid)?.value||'';
+  if(!STATE.filters.page)STATE.filters.page={};
+  if(from||to)STATE.filters.page['_date_'+field]={field,from,to}; else delete STATE.filters.page['_date_'+field];
+  if(window.DM_CROSSFILTER){
+    if(from||to) window.DM_CROSSFILTER.active[vid]={field,value:(from||'')+'~'+(to||''),label:field+': '+(from||'…')+' → '+(to||'…')};
+    else delete window.DM_CROSSFILTER.active[vid];
+  }
+  if(typeof refreshAllVisuals==='function')refreshAllVisuals();
+}
+let _slicerMin={},_slicerMax={};
+function onSlicerRange(vid,field,mn,mx,val,which){
+  if(which==='min')_slicerMin[vid]=parseFloat(val); else _slicerMax[vid]=parseFloat(val);
+  const lo=_slicerMin[vid]??mn, hi=_slicerMax[vid]??mx;
+  const el=document.getElementById('slr-val-'+vid); if(el)el.textContent=lo+' – '+hi;
+  if(!STATE.filters.page)STATE.filters.page={};
+  STATE.filters.page['_range_'+field]={field,lo,hi};
+  // Dispatch to DM_CROSSFILTER
+  if(window.DM_CROSSFILTER){
+    window.DM_CROSSFILTER.active[vid]={field,value:lo+'~'+hi,label:field+': '+lo+' – '+hi};
+  }
+  if(typeof refreshAllVisuals==='function')refreshAllVisuals();
+  else currentPage().visuals.filter(v=>v.id!==vid).forEach(v=>renderVisualContent(v));
+}
+function renderGauge(v,body,data,color){
+  const vF=v.fieldConfig['Value']?.[0]||(numericFields[0]||'');
+  const nums=data.map(r=>parseFloat(r[vF])).filter(n=>!isNaN(n));
+  const val=nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:50;
+  const maxV=parseFloat(v.fieldConfig['Maximum']?.[0]||100)||100;
+  const pct=Math.min(100,Math.max(0,(val/maxV)*100));
+  const deg=180*(pct/100);
+  body.innerHTML=`<div class="flex flex-col items-center justify-center h-full gap-2">
+    <div style="width:120px;height:60px;overflow:hidden;position:relative;">
+      <div style="width:120px;height:120px;border-radius:60px 60px 0 0;background:rgba(255,255,255,.06);position:absolute;bottom:0;"></div>
+      <div style="width:120px;height:120px;border-radius:60px 60px 0 0;background:conic-gradient(from 180deg,${color} ${deg}deg,transparent ${deg}deg);position:absolute;bottom:0;opacity:.8;"></div>
+      <div style="position:absolute;bottom:4px;left:50%;transform:translateX(-50%) rotate(${deg-90}deg);width:2px;height:50px;background:white;transform-origin:bottom center;border-radius:2px;"></div>
+    </div>
+    <div class="text-2xl font-bold" style="color:${color}">${val.toFixed(1)}</div>
+    <div class="text-[9px] text-gray-500">${vF||'Value'} / ${maxV}</div>
+  </div>`;
+}
+</script>
+<script>
+// ===== RIGHT PANEL UPDATE =====
+function updateRightPanel(){
+  if(!selectedVisuals.length){
+    document.getElementById('fmtNoSel').classList.remove('hidden');
+    document.getElementById('fmtOptions').classList.add('hidden');
+    document.getElementById('visualFilters').innerHTML='<p class="text-[10px] text-gray-600">Select a visual.</p>';
+    document.getElementById('analyticsContent').innerHTML='<p class="text-[10px] text-gray-600">Select a visual to analyze.</p>';
+    return;
+  }
+  const v=getVisual(selectedVisuals[0]); if(!v)return;
+  document.getElementById('fmtNoSel').classList.add('hidden');
+  document.getElementById('fmtOptions').classList.remove('hidden');
+  document.getElementById('fmtTitle').value=v.title||'';
+  document.getElementById('fmtLegend').checked=v.formatConfig?.legend!==false;
+  document.getElementById('fmtLabels').checked=v.formatConfig?.labels===true;
+  document.getElementById('fmtRadius').value=v.formatConfig?.radius||12;
+  document.getElementById('fmtTitle').onchange=()=>{v.title=document.getElementById('fmtTitle').value;const el=document.getElementById('title-'+v.id);if(el)el.textContent=v.title;};
+  // Visual filters
+  const wells=WELL_CONFIG[v.type]||[];
+  const allFields=[...new Set(wells.flatMap(w=>v.fieldConfig[w]||[]))];
+  const vf=document.getElementById('visualFilters');
+  if(!allFields.length){vf.innerHTML='<p class="text-[10px] text-gray-600">Add fields to this visual first.</p>';return;}
+  vf.innerHTML='';
+  allFields.forEach(field=>{
+    const card=document.createElement('div'); card.className='filter-card';
+    card.innerHTML=`<div class="flex justify-between items-center mb-1"><span class="text-[10px] font-bold">${field}</span><select class="text-[9px] bg-transparent outline-none text-gray-400"><option>Basic</option><option>Advanced</option></select></div>
+      <div class="text-[9px] text-gray-500">Showing all values</div>`;
+    vf.appendChild(card);
+  });
+  // Analytics
+  const ac=document.getElementById('analyticsContent');
+  const dataset=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+  const numF=(v.fieldConfig['Y Axis']||v.fieldConfig['Values']||[])[0]||(numericFields[0]||'');
+  if(numF&&dataset.length){
+    const vals=dataset.map(r=>parseFloat(r[numF])).filter(n=>!isNaN(n));
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const mn=Math.min(...vals), mx=Math.max(...vals);
+    ac.innerHTML=`<div class="filter-card space-y-1">
+      <div class="text-[10px] font-bold text-primary">${numF}</div>
+      <div class="flex justify-between text-[10px]"><span class="text-gray-500">Average</span><span>${avg.toFixed(2)}</span></div>
+      <div class="flex justify-between text-[10px]"><span class="text-gray-500">Min</span><span>${mn.toFixed(2)}</span></div>
+      <div class="flex justify-between text-[10px]"><span class="text-gray-500">Max</span><span>${mx.toFixed(2)}</span></div>
+      <div class="flex justify-between text-[10px]"><span class="text-gray-500">Count</span><span>${vals.length}</span></div>
+    </div>`;
+  } else {ac.innerHTML='<p class="text-[10px] text-gray-600">No numeric fields found.</p>';}
+}
+function applyFormatToSelected(){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]); if(!v)return;
+  v.formatConfig=v.formatConfig||{};
+  v.formatConfig.legend=document.getElementById('fmtLegend').checked;
+  v.formatConfig.labels=document.getElementById('fmtLabels').checked;
+  v.formatConfig.radius=parseInt(document.getElementById('fmtRadius').value)||12;
+  const tile=document.getElementById('tile-'+v.id);
+  if(tile)tile.style.borderRadius=v.formatConfig.radius+'px';
+  renderVisualContent(v); pushHistory();
+}
+function setVisualColor(hex){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]); if(!v)return;
+  v.formatConfig=v.formatConfig||{}; v.formatConfig.color=hex;
+  renderVisualContent(v); pushHistory();
+}
+
+// ===== CONTEXT ACTIONS =====
+function copySelectedVisual(){
+  if(!selectedVisuals.length)return;
+  copiedVisual=JSON.parse(JSON.stringify(getVisual(selectedVisuals[0])));
+  showToast('Visual copied','blue');
+}
+function pasteVisual(){
+  if(!copiedVisual)return;
+  const nv={...JSON.parse(JSON.stringify(copiedVisual)),id:genId(),x:copiedVisual.x+24,y:copiedVisual.y+24};
+  currentPage().visuals.push(nv); pushHistory(); createTileDOM(nv); selectVisual(nv.id); lucide.createIcons();
+}
+function duplicateSelectedVisual(){copySelectedVisual();pasteVisual();}
+function deleteSelectedVisual(){
+  if(!selectedVisuals.length)return;
+  selectedVisuals.forEach(id=>{
+    const pg=currentPage(); pg.visuals=pg.visuals.filter(v=>v.id!==id);
+    const tile=document.getElementById('tile-'+id); if(tile)tile.remove();
+    if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id];}
+  });
+  selectedVisuals=[]; pushHistory(); updateRightPanel(); updateFieldWells();
+}
+function exportVisualCSV(){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]); if(!v)return;
+  const data=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+  const cols=JSON.parse(localStorage.getItem('dm_columns')||'[]');
+  if(!data.length){showToast('No data to export','red');return;}
+  const csv=[cols.join(','),...data.map(r=>cols.map(c=>JSON.stringify(r[c]??'')).join(','))].join('\n');
+  const a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=v.title+'_data.csv'; document.body.appendChild(a); a.click(); a.remove();
+  showToast('CSV exported','green');
+}
+function showAsTable(){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]); if(!v)return;
+  const tmp={...v,type:'table',id:genId(),x:v.x+20,y:v.y+20};
+  currentPage().visuals.push(tmp); createTileDOM(tmp); lucide.createIcons(); showToast('Table added','blue');
+}
+function spotlightVisual(){
+  if(!selectedVisuals.length)return;
+  const tile=document.getElementById('tile-'+selectedVisuals[0]); if(!tile)return;
+  document.querySelectorAll('.visual-tile').forEach(t=>{if(t.id!=='tile-'+selectedVisuals[0])t.classList.toggle('dimmed');});
+}
+function dropToPageFilter(e){
+  const field=e.dataTransfer.getData('text/plain'); if(!field)return;
+  if(!STATE.filters.page)STATE.filters.page={};
+  STATE.filters.page[field]=[]; showToast('Page filter added: '+field,'blue');
+  currentPage().visuals.forEach(v=>renderVisualContent(v));
+}
+function dropToReportFilter(e){
+  const field=e.dataTransfer.getData('text/plain'); if(!field)return;
+  if(!STATE.filters.report)STATE.filters.report={};
+  STATE.filters.report[field]=[]; showToast('Report filter added: '+field,'blue');
+  STATE.pages.forEach(pg=>pg.visuals.forEach(v=>renderVisualContent(v)));
+}
+function handleCrossFilterClick(id,e){showToast('Click a data point in the chart to cross-filter','blue');}
+// ===== PROFILE DROPDOWN =====
+document.addEventListener('DOMContentLoaded',()=>{
+  const btn=document.getElementById('profileDropdownBtn');
+  const drop=document.getElementById('profileDropdown');
+  if(btn&&drop){
+    btn.onclick=e=>{e.stopPropagation();drop.classList.toggle('hidden');};
+    document.addEventListener('click',()=>drop.classList.add('hidden'));
+  }
+  const mt=document.getElementById('menuToggle');
+  const sb=document.querySelector('.sidebar');
+  const ov=document.getElementById('sidebarOverlay');
+  if(mt){
+    mt.onclick=()=>{sb.classList.toggle('open');ov.classList.toggle('visible');};
+    ov.onclick=()=>{sb.classList.remove('open');ov.classList.remove('visible');};
+  }
+});
+</script>
+<script src="viz_fix.js"></script>
+<script src="viz_crossfilter.js"></script>
+<script src="viz_filters.js"></script>
+<script src="viz_analytics.js"></script>
+
+<!-- Firebase Auth Guard -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+const app = initializeApp(CONFIG.firebaseConfig);
+const auth = getAuth(app);
+onAuthStateChanged(auth, (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  const storedName = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+  if (storedName) {
+    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = storedName);
+    document.querySelectorAll('.user-avatar-display').forEach(el => {
+      el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedName)}&background=random`;
+    });
+  }
+});
+const handleLogout = async (e) => {
+  e.preventDefault();
+  await signOut(auth);
+  localStorage.removeItem('dm_user_email');
+  localStorage.removeItem('dm_user_name');
+  window.location.href = 'index.html';
+};
+const logoutBtn = document.getElementById('logoutBtn');
+const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+</script>
+<script>
+(function(){
+  var btn=document.getElementById('hamburgerBtn');
+  var sidebar=document.querySelector('.sidebar');
+  var h1=document.getElementById('hb1');
+  var h2=document.getElementById('hb2');
+  var h3=document.getElementById('hb3');
+  if(!btn||!sidebar)return;
+  sidebar.style.transition='margin-left 0.3s ease';
+  var open=localStorage.getItem('dm_sidebar_open')!=='false';
+  function applyState(isOpen,animate){
+    if(!animate)sidebar.style.transition='none';
+    sidebar.style.marginLeft=isOpen?'0px':'-260px';
+    if(!animate)setTimeout(function(){sidebar.style.transition='margin-left 0.3s ease';},50);
+    if(isOpen){h1.style.transform='none';h2.style.opacity='1';h2.style.transform='none';h3.style.transform='none';}
+    else{h1.style.transform='translateY(7px) rotate(45deg)';h2.style.opacity='0';h2.style.transform='scaleX(0)';h3.style.transform='translateY(-7px) rotate(-45deg)';}
+  }
+  applyState(open,false);
+  btn.addEventListener('click',function(){open=!open;localStorage.setItem('dm_sidebar_open',open?'true':'false');applyState(open,true);});
+})();
+</script><!-- RESIZING LOGIC -->
+<script>
+(function() {
+  const outerResizer = document.getElementById('outerResizer');
+  const innerResizer = document.getElementById('innerResizer');
+  const leftPanel = document.getElementById('builderLeftPanel');
+  const fieldsPanel = document.getElementById('fieldsPanel');
+
+  let isResizingOuter = false;
+  let isResizingInner = false;
+
+  outerResizer.addEventListener('mousedown', (e) => {
+    isResizingOuter = true;
+    outerResizer.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  innerResizer.addEventListener('mousedown', (e) => {
+    isResizingInner = true;
+    innerResizer.classList.add('resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isResizingOuter) {
+      const newWidth = e.clientX - leftPanel.getBoundingClientRect().left;
+      if (newWidth > 180 && newWidth < 600) {
+        leftPanel.style.width = newWidth + 'px';
+      }
+    } else if (isResizingInner) {
+      const newWidth = e.clientX - fieldsPanel.getBoundingClientRect().left;
+      if (newWidth > 60 && newWidth < (leftPanel.offsetWidth - 100)) {
+        fieldsPanel.style.width = newWidth + 'px';
+      }
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isResizingOuter || isResizingInner) {
+      isResizingOuter = false;
+      isResizingInner = false;
+      outerResizer.classList.remove('resizing');
+      innerResizer.classList.remove('resizing');
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+    }
+  });
+})();
+</script>
+</body>
+</html>
+
+
+
+<script>
+// ===== FORMAT PANEL ENHANCEMENTS =====
+function switchFmtTab(tab){
+  document.getElementById('fmtVisTab').classList.toggle('hidden',tab!=='visual');
+  document.getElementById('fmtGenTab').classList.toggle('hidden',tab!=='general');
+  document.getElementById('fmtVisTabBtn').classList.toggle('active',tab==='visual');
+  document.getElementById('fmtGenTabBtn').classList.toggle('active',tab==='general');
+  if(tab==='general'){const v=getVisual(selectedVisuals[0]);if(v){document.getElementById('posX').value=v.x;document.getElementById('posY').value=v.y;document.getElementById('posW').value=v.w;document.getElementById('posH').value=v.h;}}
+}
+function toggleFmtSec(hdr){const body=hdr.nextElementSibling;body.classList.toggle('collapsed');const icon=hdr.querySelector('[data-lucide="chevron-down"]');if(icon)icon.style.transform=body.classList.contains('collapsed')?'rotate(-90deg)':'';}
+function buildVisualFormatSections(v){
+  const container=document.getElementById('fmtVisualSections');
+  if(!container)return;
+  const type=v.type; const fc=v.formatConfig||{};
+  const isBar=['clustered-bar','stacked-bar','100-bar','clustered-col','stacked-col','waterfall','combo'].includes(type);
+  const isLine=['line','area','stacked-area'].includes(type);
+  const isPie=['pie','donut'].includes(type);
+  const isCard=['card','multi-card'].includes(type);
+  const isTable=['table','matrix'].includes(type);
+  let html='';
+  if(isBar||isLine){
+    html+=fmtSection('X Axis',`
+      <div class="flex justify-between"><span class="text-[10px] text-gray-400">Show axis</span><input type="checkbox" ${fc.xAxis!==false?'checked':''} class="accent-primary" onchange="setFc('xAxis',this.checked)"></div>
+      <input type="text" class="fmt-input mt-1" placeholder="Axis title" value="${fc.xTitle||''}" oninput="setFc('xTitle',this.value)">
+      <div class="flex gap-1 mt-1"><input type="number" class="fmt-input w-16" value="${fc.xMin||''}" placeholder="Min" oninput="setFc('xMin',this.value)"><input type="number" class="fmt-input w-16" value="${fc.xMax||''}" placeholder="Max" oninput="setFc('xMax',this.value)"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Gridlines</span><input type="checkbox" ${fc.xGrid!==false?'checked':''} class="accent-primary" onchange="setFc('xGrid',this.checked)"></div>`);
+    html+=fmtSection('Y Axis',`
+      <div class="flex justify-between"><span class="text-[10px] text-gray-400">Show axis</span><input type="checkbox" ${fc.yAxis!==false?'checked':''} class="accent-primary" onchange="setFc('yAxis',this.checked)"></div>
+      <input type="text" class="fmt-input mt-1" placeholder="Axis title" value="${fc.yTitle||''}" oninput="setFc('yTitle',this.value)">
+      <div class="flex gap-1 mt-1"><input type="number" class="fmt-input w-16" value="${fc.yMin||''}" placeholder="Min" oninput="setFc('yMin',this.value)"><input type="number" class="fmt-input w-16" value="${fc.yMax||''}" placeholder="Max" oninput="setFc('yMax',this.value)"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Invert range</span><input type="checkbox" ${fc.yInvert?'checked':''} class="accent-primary" onchange="setFc('yInvert',this.checked)"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Gridlines</span><input type="checkbox" ${fc.yGrid!==false?'checked':''} class="accent-primary" onchange="setFc('yGrid',this.checked)"></div>`);
+  }
+  if(isBar){
+    html+=fmtSection('Bars / Columns',`
+      <div class="flex gap-2 items-center"><span class="text-[10px] text-gray-400">Color</span><input type="color" value="${fc.color||'#8B5CF6'}" class="w-8 h-6 rounded border-0 bg-transparent cursor-pointer" onchange="setFc('color',this.value)"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Show border</span><input type="checkbox" ${fc.barBorder?'checked':''} class="accent-primary" onchange="setFc('barBorder',this.checked)"></div>
+      <div class="mt-1"><label class="text-[10px] text-gray-400">Inner padding</label><input type="range" min="0" max="0.9" step="0.05" value="${fc.barPad||0.2}" class="w-full accent-primary" oninput="setFc('barPad',parseFloat(this.value))"></div>
+      <button onclick="openCondFmt('${v.id}')" class="w-full mt-2 py-1.5 text-[10px] border border-white/10 rounded-lg hover:bg-white/5">Conditional Formatting...</button>`);
+  }
+  if(isLine){
+    html+=fmtSection('Lines',`
+      <div><label class="text-[10px] text-gray-400">Stroke width</label><input type="range" min="1" max="5" value="${fc.strokeW||2}" class="w-full accent-primary" oninput="setFc('strokeW',parseInt(this.value))"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Smooth</span><input type="checkbox" ${fc.smooth?'checked':''} class="accent-primary" onchange="setFc('smooth',this.checked)"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Show markers</span><input type="checkbox" ${fc.markers!==false?'checked':''} class="accent-primary" onchange="setFc('markers',this.checked)"></div>
+      <select class="fmt-select w-full mt-1" onchange="setFc('lineStyle',this.value)"><option>solid</option><option>dashed</option><option>dotted</option></select>`);
+    if(type==='area'){html+=fmtSection('Shading',`<label class="text-[10px] text-gray-400">Opacity</label><input type="range" min="0" max="100" value="${fc.areaOpacity||30}" class="w-full accent-primary" oninput="setFc('areaOpacity',parseInt(this.value))">`);}
+  }
+  if(isPie){
+    html+=fmtSection('Slices',`<div class="flex justify-between"><span class="text-[10px] text-gray-400">Border</span><input type="checkbox" ${fc.sliceBorder?'checked':''} class="accent-primary" onchange="setFc('sliceBorder',this.checked)"></div>`);
+    html+=fmtSection('Labels',`<div class="flex justify-between"><span class="text-[10px] text-gray-400">Show labels</span><input type="checkbox" ${fc.pieLabels!==false?'checked':''} class="accent-primary" onchange="setFc('pieLabels',this.checked)"></div>
+      <select class="fmt-select w-full mt-1" onchange="setFc('pieLabelStyle',this.value)"><option>Category</option><option>Percent</option><option>Value</option><option>Category+Percent</option></select>`);
+    if(type==='donut'){html+=fmtSection('Inner Radius',`<input type="range" min="20" max="80" value="${fc.innerRadius||65}" class="w-full accent-primary" oninput="setFc('innerRadius',parseInt(this.value))">`);}
+    html+=fmtSection('Rotation',`<input type="range" min="0" max="360" value="${fc.rotation||0}" class="w-full accent-primary" oninput="setFc('rotation',parseInt(this.value))">`);
+  }
+  if(isCard){
+    html+=fmtSection('Value',`
+      <div class="flex gap-2 items-center"><span class="text-[10px] text-gray-400">Color</span><input type="color" value="${fc.color||'#8B5CF6'}" class="w-8 h-6 rounded border-0 bg-transparent cursor-pointer" onchange="setFc('color',this.value)"></div>
+      <input type="number" class="fmt-input mt-1" placeholder="Font size" value="${fc.cardFontSize||36}" oninput="setFc('cardFontSize',parseInt(this.value))">
+      <select class="fmt-select w-full mt-1" onchange="setFc('displayUnits',this.value)"><option>None</option><option>K</option><option>M</option><option>B</option></select>`);
+    html+=fmtSection('Label',`<input type="text" class="fmt-input" placeholder="Override label" value="${fc.cardLabel||''}" oninput="setFc('cardLabel',this.value)">`);
+  }
+  if(isTable){
+    html+=fmtSection('Header Row',`
+      <div class="flex justify-between"><span class="text-[10px] text-gray-400">Bold</span><input type="checkbox" ${fc.hdrBold!==false?'checked':''} class="accent-primary" onchange="setFc('hdrBold',this.checked)"></div>
+      <div class="flex gap-2 items-center mt-1"><span class="text-[10px] text-gray-400">Bg</span><input type="color" value="${fc.hdrBg||'#0d0d18'}" class="w-8 h-6 rounded border-0 bg-transparent cursor-pointer" onchange="setFc('hdrBg',this.value)"></div>`);
+    html+=fmtSection('Values',`
+      <div class="flex justify-between"><span class="text-[10px] text-gray-400">Alt rows</span><input type="checkbox" ${fc.altRows?'checked':''} class="accent-primary" onchange="setFc('altRows',this.checked)"></div>
+      <div class="flex justify-between mt-1"><span class="text-[10px] text-gray-400">Gridlines</span><input type="checkbox" ${fc.tableGrid!==false?'checked':''} class="accent-primary" onchange="setFc('tableGrid',this.checked)"></div>`);
+  }
+  html+=fmtSection('Data Labels',`
+    <div class="flex justify-between"><span class="text-[10px] text-gray-400">Show labels</span><input type="checkbox" ${fc.labels?'checked':''} class="accent-primary" onchange="setFc('labels',this.checked)"></div>
+    <select class="fmt-select w-full mt-1" onchange="setFc('labelPos',this.value)"><option>Inside end</option><option>Outside end</option><option>Inside center</option><option>Auto</option></select>
+    <div class="flex gap-1 mt-1"><input type="number" class="fmt-input w-16" value="${fc.labelSize||11}" placeholder="Size" oninput="setFc('labelSize',parseInt(this.value))"><select class="fmt-select flex-1" onchange="setFc('displayUnits',this.value)"><option>None</option><option>K</option><option>M</option><option>B</option></select></div>`);
+  html+=fmtSection('Legend',`
+    <div class="flex justify-between"><span class="text-[10px] text-gray-400">Show legend</span><input type="checkbox" ${fc.legend!==false?'checked':''} class="accent-primary" onchange="setFc('legend',this.checked)"></div>
+    <select class="fmt-select w-full mt-1" onchange="setFc('legendPos',this.value)"><option>Bottom</option><option>Top</option><option>Left</option><option>Right</option><option>Top-right</option></select>`);
+  container.innerHTML=html; lucide.createIcons();
+}
+function fmtSection(title,body){return`<div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>${title}</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body">${body}</div></div>`;}
+function setFc(key,val){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]);if(!v)return;
+  v.formatConfig=v.formatConfig||{};v.formatConfig[key]=val;
+  renderVisualContent(v);pushHistory();
+}
+function applyGenFmt(){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]);if(!v)return;
+  const fc=v.formatConfig=v.formatConfig||{};
+  fc.radius=parseInt(document.getElementById('fmtRadius')?.value||12);
+  fc.showTitle=document.getElementById('genShowTitle')?.checked;
+  fc.titleText=document.getElementById('genTitleText')?.value||'';
+  fc.titleFont=document.getElementById('genTitleFont')?.value||'Inter';
+  fc.titleSize=parseInt(document.getElementById('genTitleSize')?.value||13);
+  fc.titleBold=document.getElementById('genTitleBold')?.checked;
+  fc.titleItalic=document.getElementById('genTitleItalic')?.checked;
+  fc.titleColor=document.getElementById('genTitleColor')?.value||'#fff';
+  fc.bgOn=document.getElementById('genBgOn')?.checked;
+  fc.bgColor=document.getElementById('genBgColor')?.value||'#0d0d18';
+  fc.bgOpacity=parseInt(document.getElementById('genBgOpacity')?.value||90);
+  fc.borderOn=document.getElementById('genBorderOn')?.checked;
+  fc.borderColor=document.getElementById('genBorderColor')?.value||'#fff';
+  fc.borderW=parseInt(document.getElementById('genBorderW')?.value||1);
+  fc.shadowOn=document.getElementById('genShadowOn')?.checked;
+  const tile=document.getElementById('tile-'+v.id);
+  if(tile){
+    tile.style.borderRadius=fc.radius+'px';
+    tile.style.border=fc.borderOn?`${fc.borderW}px solid ${fc.borderColor}`:'1px solid rgba(255,255,255,.08)';
+    tile.style.boxShadow=fc.shadowOn?'0 20px 60px rgba(0,0,0,.5)':v.id===selectedVisuals[0]?'0 0 0 2px rgba(59,130,246,.3)':'';
+    if(fc.bgOn){const hex=fc.bgColor;const op=fc.bgOpacity/100;tile.style.background=`rgba(${parseInt(hex.slice(1,3),16)},${parseInt(hex.slice(3,5),16)},${parseInt(hex.slice(5,7),16)},${op})`;}
+  }
+  const titleEl=document.getElementById('title-'+v.id);
+  if(titleEl&&fc.showTitle!==false){
+    if(fc.titleText)titleEl.textContent=fc.titleText;
+    titleEl.style.fontFamily=fc.titleFont||'Inter';
+    titleEl.style.fontSize=(fc.titleSize||13)+'px';
+    titleEl.style.fontWeight=fc.titleBold?'700':'600';
+    titleEl.style.fontStyle=fc.titleItalic?'italic':'normal';
+    titleEl.style.color=fc.titleColor||'#fff';
+  }
+  pushHistory();
+}
+function applyPosFmt(dim,val){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]);if(!v)return;
+  const n=parseInt(val)||0;
+  if(dim==='x')v.x=n; else if(dim==='y')v.y=n; else if(dim==='w')v.w=Math.max(80,n); else v.h=Math.max(50,n);
+  const tile=document.getElementById('tile-'+v.id);
+  if(tile){tile.style.left=v.x+'px';tile.style.top=v.y+'px';tile.style.width=v.w+'px';tile.style.height=v.h+'px';}
+  renderVisualContent(v);pushHistory();
+}
+function setTitleAlign(a){setFc('titleAlign',a);}
+function bringForward(){if(!selectedVisuals.length)return;const pg=currentPage();const i=pg.visuals.findIndex(v=>v.id===selectedVisuals[0]);if(i<pg.visuals.length-1){[pg.visuals[i],pg.visuals[i+1]]=[pg.visuals[i+1],pg.visuals[i]];renderCanvas();selectVisual(selectedVisuals[0]);}}
+function sendBackward(){if(!selectedVisuals.length)return;const pg=currentPage();const i=pg.visuals.findIndex(v=>v.id===selectedVisuals[0]);if(i>0){[pg.visuals[i],pg.visuals[i-1]]=[pg.visuals[i-1],pg.visuals[i]];renderCanvas();selectVisual(selectedVisuals[0]);}}
+function applyAllFilters(){currentPage().visuals.forEach(v=>renderVisualContent(v));showToast('Filters applied','green');}
+</script>
+<script>
+// ===== ANALYTICS PANEL =====
+function buildAnalyticsPanel(v){
+  const el=document.getElementById('analyticsContent');if(!el)return;
+  const type=v.type;
+  const isPie=['pie','donut','treemap','card','multi-card','table','matrix','slicer'].includes(type);
+  if(isPie){el.innerHTML='<p class="text-[10px] text-gray-500 italic">No analytics options for this visual type.</p>';return;}
+  const isScatter=['scatter','bubble'].includes(type);
+  const al=v.analytics=v.analytics||{};
+  let html='<div class="space-y-2">';
+  if(!isScatter){
+    html+=`<div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Reference Lines</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+      <div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.avgLine?'checked':''} onchange="setAnalytic('avgLine',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Average</span><input type="color" value="${al.avgColor||'#06B6D4'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="setAnalytic('avgColor',this.value)"></div>
+      <div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.minLine?'checked':''} onchange="setAnalytic('minLine',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Min</span><input type="color" value="${al.minColor||'#22C55E'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="setAnalytic('minColor',this.value)"></div>
+      <div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.maxLine?'checked':''} onchange="setAnalytic('maxLine',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Max</span><input type="color" value="${al.maxColor||'#EF4444'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="setAnalytic('maxColor',this.value)"></div>
+      <div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.medLine?'checked':''} onchange="setAnalytic('medLine',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Median</span><input type="color" value="${al.medColor||'#F59E0B'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="setAnalytic('medColor',this.value)"></div>
+      <div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.trendLine?'checked':''} onchange="setAnalytic('trendLine',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Trend</span><input type="color" value="${al.trendColor||'#A78BFA'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="setAnalytic('trendColor',this.value)"></div>
+      <div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.pctLine?'checked':''} onchange="setAnalytic('pctLine',this.checked)"><span class="text-[10px] text-gray-400">Percentile</span><input type="number" value="${al.pctValue||90}" min="0" max="100" class="fmt-input w-14" oninput="setAnalytic('pctValue',parseInt(this.value))"><input type="color" value="${al.pctColor||'#EC4899'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="setAnalytic('pctColor',this.value)"></div>
+    </div></div>`;
+    html+=`<div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Constant Lines</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+      <div id="constLinesList">${renderConstLines(al.constLines||[])}</div>
+      <button onclick="addConstLine('${v.id}')" class="w-full py-1.5 text-[10px] border border-white/10 rounded-lg hover:bg-white/5">+ Add Constant Line</button>
+    </div></div>`;
+    html+=`<div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Error Bars</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+      <div class="flex justify-between"><span class="text-[10px] text-gray-400">Enable</span><input type="checkbox" class="accent-primary" ${al.errBars?'checked':''} onchange="setAnalytic('errBars',this.checked)"></div>
+      <select class="fmt-select w-full" onchange="setAnalytic('errType',this.value)"><option>Percentage</option><option>Absolute</option></select>
+      <input type="number" class="fmt-input" value="${al.errValue||5}" placeholder="Value" oninput="setAnalytic('errValue',parseFloat(this.value))">
+    </div></div>`;
+  } else {
+    html+=`<div class="fmt-section"><div class="fmt-section-hdr" onclick="toggleFmtSec(this)"><span>Trend Line</span><i data-lucide="chevron-down" class="w-3 h-3"></i></div><div class="fmt-section-body space-y-2">
+      <div class="flex justify-between"><span class="text-[10px] text-gray-400">Show</span><input type="checkbox" class="accent-primary" ${al.trendLine?'checked':''} onchange="setAnalytic('trendLine',this.checked)"></div>
+      <select class="fmt-select w-full" onchange="setAnalytic('trendType',this.value)"><option>Linear</option><option>Exponential</option><option>Logarithmic</option><option>Power</option></select>
+    </div></div>`;
+    html+=`<div class="analytics-line-row mt-2"><input type="checkbox" class="accent-primary" ${al.symShade?'checked':''} onchange="setAnalytic('symShade',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Symmetry shading</span></div>`;
+    html+=`<div class="analytics-line-row"><input type="checkbox" class="accent-primary" ${al.ratioLine?'checked':''} onchange="setAnalytic('ratioLine',this.checked)"><span class="flex-1 text-[10px] text-gray-400">Ratio line</span></div>`;
+  }
+  html+='</div>';
+  el.innerHTML=html; lucide.createIcons();
+}
+function renderConstLines(lines){
+  return lines.map((l,i)=>`<div class="condFmt-rule-row flex gap-1 items-center mb-1">
+    <input type="number" value="${l.value||0}" class="fmt-input w-16" oninput="updateConstLine(${i},'value',parseFloat(this.value))">
+    <input type="text" value="${l.label||''}" class="fmt-input flex-1" placeholder="Label" oninput="updateConstLine(${i},'label',this.value)">
+    <input type="color" value="${l.color||'#8B5CF6'}" class="w-6 h-5 rounded border-0 bg-transparent cursor-pointer" onchange="updateConstLine(${i},'color',this.value)">
+    <button onclick="removeConstLine(${i})" class="text-gray-600 hover:text-red-400 text-xs px-1">x</button>
+  </div>`).join('');
+}
+function setAnalytic(key,val){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]);if(!v)return;
+  v.analytics=v.analytics||{}; v.analytics[key]=val;
+  renderVisualContent(v); pushHistory();
+}
+function addConstLine(vid){
+  const v=getVisual(vid);if(!v)return;
+  v.analytics=v.analytics||{}; v.analytics.constLines=v.analytics.constLines||[];
+  v.analytics.constLines.push({value:0,label:'Line',color:'#8B5CF6',style:'solid'});
+  const el=document.getElementById('constLinesList');
+  if(el)el.innerHTML=renderConstLines(v.analytics.constLines);
+  renderVisualContent(v);
+}
+function updateConstLine(i,key,val){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]);if(!v||!v.analytics?.constLines)return;
+  v.analytics.constLines[i][key]=val; renderVisualContent(v);
+}
+function removeConstLine(i){
+  if(!selectedVisuals.length)return;
+  const v=getVisual(selectedVisuals[0]);if(!v||!v.analytics?.constLines)return;
+  v.analytics.constLines.splice(i,1);
+  const el=document.getElementById('constLinesList');
+  if(el)el.innerHTML=renderConstLines(v.analytics.constLines);
+  renderVisualContent(v);
+}
+// Override updateRightPanel to call buildVisualFormatSections and buildAnalyticsPanel
+const _origUpdateRP=window.updateRightPanel;
+window.updateRightPanel=function(){
+  if(!selectedVisuals.length){
+    document.getElementById('fmtNoSel')?.classList.remove('hidden');
+    document.getElementById('fmtOptions')?.classList.add('hidden');
+    document.getElementById('visualFilters').innerHTML='<p class="text-[10px] text-gray-600">Select a visual.</p>';
+    document.getElementById('analyticsContent').innerHTML='<p class="text-[10px] text-gray-600">Select a visual to see analytics options.</p>';
+    return;
+  }
+  const v=getVisual(selectedVisuals[0]);if(!v)return;
+  document.getElementById('fmtNoSel')?.classList.add('hidden');
+  document.getElementById('fmtOptions')?.classList.remove('hidden');
+  buildVisualFormatSections(v); buildAnalyticsPanel(v);
+  // Fill gen tab values
+  const fc=v.formatConfig||{};
+  const ti=document.getElementById('genTitleText');if(ti)ti.value=v.title||'';
+  const pr=document.getElementById('posX');if(pr){document.getElementById('posX').value=v.x;document.getElementById('posY').value=v.y;document.getElementById('posW').value=v.w;document.getElementById('posH').value=v.h;}
+  // Visual filters
+  const wells=WELL_CONFIG[v.type]||[];
+  const allFields=[...new Set(wells.flatMap(w=>v.fieldConfig[w]||[]))];
+  const vf=document.getElementById('visualFilters');
+  vf.innerHTML=allFields.length?allFields.map(field=>`<div class="filter-card flex items-center justify-between"><span class="text-[10px] font-bold">${field}</span><div class="flex items-center gap-1"><button class="text-gray-600 hover:text-white p-0.5"><i data-lucide="eye" class="w-3 h-3"></i></button><button class="text-gray-600 hover:text-white p-0.5"><i data-lucide="lock" class="w-3 h-3"></i></button><button class="text-gray-600 hover:text-red-400 p-0.5"><i data-lucide="x" class="w-3 h-3"></i></button></div></div>`).join(''):'<p class="text-[10px] text-gray-600">Add fields to this visual first.</p>';
+  // Analytics stats
+  const dataset=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+  const numF=(v.fieldConfig['Y Axis']||v.fieldConfig['Values']||[])[0]||(numericFields[0]||'');
+  const ac=document.getElementById('analyticsContent');
+  if(numF&&dataset.length&&!['pie','donut','table','matrix','card','multi-card','slicer','treemap'].includes(v.type)){
+    buildAnalyticsPanel(v);
+  }
+  lucide.createIcons();
+};
+</script>
+<script>
+// ===== AI MEASURES =====
+let aiMeasureLoading=false;
+let currentAIMeasure=null;
+let savedMeasures=JSON.parse(localStorage.getItem('dm_measures')||'[]');
+function openAIMeasure(){
+  const panel=document.getElementById('aiMeasurePanel');
+  panel.style.transform='translateX(0)';
+  panel.style.pointerEvents='all';
+  renderSavedMeasures();
+}
+function closeAIMeasure(){
+  const panel=document.getElementById('aiMeasurePanel');
+  panel.style.transform='translateX(-100%)';
+}
+async function generateAIMeasure(){
+  if(aiMeasureLoading)return;
+  const prompt=document.getElementById('aiMeasureInput').value.trim();
+  if(!prompt){showToast('Please describe your measure','red');return;}
+  aiMeasureLoading=true;
+  const btn=document.getElementById('aiMeasureBtn');
+  btn.textContent='Generating...'; btn.disabled=true;
+  const cols=JSON.parse(localStorage.getItem('dm_columns')||'[]');
+  const data=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+  const sampleRows=data.slice(0,3);
+  const colTypes={};
+  cols.forEach(c=>{
+    const sample=data.slice(0,20).map(r=>r[c]).filter(v=>v!=null&&v!=='');
+    const nc=sample.filter(v=>!isNaN(parseFloat(v))).length;
+    colTypes[c]=nc/Math.max(sample.length,1)>0.7?'numeric':'categorical';
+  });
+  const systemPrompt=`Dataset columns: ${JSON.stringify(cols)}. Column types: ${JSON.stringify(colTypes)}. Sample data: ${JSON.stringify(sampleRows)}. User request: ${prompt}. Generate a JavaScript measure for a data analytics dashboard. Return ONLY a JSON object (no markdown, no code block): {"name":"measure display name","formula":"JS arrow function string that takes (rows, selectedRows) as params and returns a value or array of values. rows = full dataset array of objects.","explanation":"plain English explanation","columns_used":["col1"]}`;
+  try{
+    const res=await fetch(`${CONFIG.geminiEndpoint}${CONFIG.geminiModel}:generateContent?key=${CONFIG.geminiApiKey}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{text:systemPrompt}]}],generationConfig:{maxOutputTokens:CONFIG.maxTokens||512,temperature:0.2}})
+    });
+    const d=await res.json();
+    const raw=d.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    const jsonStr=raw.replace(/```json|```/g,'').trim();
+    currentAIMeasure=JSON.parse(jsonStr);
+    showAIMeasureResult(currentAIMeasure);
+  }catch(e){
+    showToast('AI error: '+e.message+'. Try simpler wording.','red');
+  }finally{
+    aiMeasureLoading=false; btn.textContent='Generate Measure'; btn.disabled=false;
+  }
+}
+function showAIMeasureResult(m){
+  document.getElementById('aiMeasureResultSection').classList.remove('hidden');
+  document.getElementById('aiMeasureName').value=m.name||'New Measure';
+  document.getElementById('aiMeasureFormula').textContent=m.formula||'';
+  document.getElementById('aiMeasureExplanation').textContent=m.explanation||'';
+  const cols=document.getElementById('aiMeasureCols');
+  cols.innerHTML=(m.columns_used||[]).map(c=>`<span class="field-chip">${c}</span>`).join('');
+}
+function applyAIMeasure(){
+  if(!currentAIMeasure||!currentAIMeasure.formula)return;
+  try{
+    const rows=JSON.parse(localStorage.getItem('dm_dataset')||'[]');
+    const fn=new Function('rows','selectedRows','return ('+currentAIMeasure.formula+')(rows,selectedRows)');
+    const result=fn(rows,rows);
+    const name=document.getElementById('aiMeasureName').value||currentAIMeasure.name;
+    const newCol=name.replace(/\s+/g,'_');
+    let val=result;
+    if(Array.isArray(result)){
+      rows.forEach((r,i)=>r[newCol]=result[i]??null);
+    } else {
+      rows.forEach(r=>r[newCol]=val);
+    }
+    localStorage.setItem('dm_dataset',JSON.stringify(rows));
+    const cols=JSON.parse(localStorage.getItem('dm_columns')||'[]');
+    if(!cols.includes(newCol)){cols.push(newCol);localStorage.setItem('dm_columns',JSON.stringify(cols));}
+    showToast('Measure applied to dataset: '+newCol,'green');
+    detectFields();
+  }catch(e){showToast('Formula error: '+e.message,'red');}
+}
+function addAIMeasureToFields(){
+  if(!currentAIMeasure)return;
+  const name=document.getElementById('aiMeasureName').value||currentAIMeasure.name;
+  const measure={name,formula:currentAIMeasure.formula,explanation:currentAIMeasure.explanation,cols:currentAIMeasure.columns_used||[]};
+  savedMeasures.push(measure);
+  localStorage.setItem('dm_measures',JSON.stringify(savedMeasures));
+  if(!numericFields.includes(name))numericFields.push(name);
+  renderFieldsTab(); renderSavedMeasures();
+  showToast('Measure added to Fields: '+name,'green');
+}
+function renderSavedMeasures(){
+  const el=document.getElementById('savedMeasuresList'); if(!el)return;
+  if(!savedMeasures.length){el.innerHTML='<p class="text-[10px] text-gray-600">No saved measures yet.</p>';return;}
+  el.innerHTML=savedMeasures.map((m,i)=>`<div class="flex items-center gap-2 p-2 rounded-lg border border-white/6 hover:bg-white/5 transition-colors">
+    <span class="field-dot" style="background:#8B5CF6"></span>
+    <span class="flex-1 text-[10px] truncate">${m.name}</span>
+    <button onclick="deleteSavedMeasure(${i})" class="text-[9px] text-gray-600 hover:text-red-400">x</button>
+  </div>`).join('');
+}
+function deleteSavedMeasure(i){savedMeasures.splice(i,1);localStorage.setItem('dm_measures',JSON.stringify(savedMeasures));renderSavedMeasures();}
+
+// ===== CONDITIONAL FORMATTING =====
+let condFmtVid=null, condFmtMode='rules';
+const condFmtRules=[];
+function openCondFmt(vid){
+  condFmtVid=vid; condFmtMode='rules'; condFmtRules.length=0;
+  document.getElementById('condFmtModal').classList.remove('hidden');
+  const v=getVisual(vid); const yField=(v?.fieldConfig?.['Y Axis']||[])[0]||'Value';
+  document.getElementById('condFmtField').textContent=yField;
+  const sel=document.getElementById('cfmFieldSel');
+  const cols=JSON.parse(localStorage.getItem('dm_columns')||'[]');
+  sel.innerHTML=cols.map(c=>`<option>${c}</option>`).join('');
+  renderCondFmtRules();
+}
+function closeCondFmt(){document.getElementById('condFmtModal').classList.add('hidden');}
+function setCondFmtMode(m){
+  condFmtMode=m;
+  document.getElementById('cfmRules').classList.toggle('hidden',m!=='rules');
+  document.getElementById('cfmGradient').classList.toggle('hidden',m!=='gradient');
+  document.getElementById('cfmFieldMode').classList.toggle('hidden',m!=='field');
+  ['rules','grad','field'].forEach(t=>{const b=document.getElementById('cfm'+t.charAt(0).toUpperCase()+t.slice(1)+'Btn');if(b)b.style.borderColor=t===m?'#8B5CF6':'';});
+}
+function addCondFmtRule(){
+  condFmtRules.push({condition:'is greater than',value:'',color:'#8B5CF6'});
+  renderCondFmtRules();
+}
+function renderCondFmtRules(){
+  const el=document.getElementById('cfmRulesList'); if(!el)return;
+  const conditions=['is greater than','is less than','is greater than or equal to','is less than or equal to','is equal to','is not equal to','is blank','is not blank'];
+  el.innerHTML=condFmtRules.map((r,i)=>`<div class="condFmt-rule-row flex items-center gap-2 p-2 rounded-lg border border-white/8 bg-white/3 mb-1">
+    <span class="text-[10px] text-gray-500">If</span>
+    <select class="fmt-select flex-1" onchange="condFmtRules[${i}].condition=this.value">${conditions.map(c=>`<option${r.condition===c?' selected':''}>${c}</option>`).join('')}</select>
+    <input type="text" value="${r.value}" class="fmt-input w-16" placeholder="value" oninput="condFmtRules[${i}].value=this.value">
+    <input type="color" value="${r.color}" class="w-7 h-6 rounded border-0 bg-transparent cursor-pointer" onchange="condFmtRules[${i}].color=this.value">
+    <button onclick="condFmtRules.splice(${i},1);renderCondFmtRules()" class="text-gray-600 hover:text-red-400 text-xs">x</button>
+  </div>`).join('')||'<p class="text-[10px] text-gray-600 py-2">No rules yet. Click + Add Rule.</p>';
+}
+function applyCondFmt(){
+  if(!condFmtVid)return;
+  const v=getVisual(condFmtVid); if(!v)return;
+  v.formatConfig=v.formatConfig||{};
+  if(condFmtMode==='rules')v.formatConfig.condFmtRules=[...condFmtRules];
+  else if(condFmtMode==='gradient')v.formatConfig.condFmtGrad={min:document.getElementById('cfmGradMin').value,mid:document.getElementById('cfmGradMid').value,max:document.getElementById('cfmGradMax').value};
+  else v.formatConfig.condFmtField=document.getElementById('cfmFieldSel').value;
+  v.formatConfig.condFmtMode=condFmtMode;
+  renderVisualContent(v); closeCondFmt(); showToast('Conditional formatting applied','green');
+}
+// Patch buildChartConfig to apply conditional formatting
+const _origBuildChart=window.buildChartConfig;
+window.buildChartConfig=function(v,rawData,color,showLegend,showLabels){
+  const cfg=_origBuildChart.call(this,v,rawData,color,showLegend,showLabels);
+  if(!cfg||!v.formatConfig)return cfg;
+  const fc=v.formatConfig;
+  // Apply analytics reference lines as extra datasets
+  const al=v.analytics||{};
+  const data=applyFilters(rawData,v.id);
+  const yWell=WELL_CONFIG[v.type]?.includes('Y Axis')?'Y Axis':'Values';
+  const yField=(v.fieldConfig[yWell]||[])[0]||(numericFields[0]||'');
+  const nums=yField?data.map(r=>parseFloat(r[yField])).filter(n=>!isNaN(n)):[];
+  if(cfg.data&&cfg.data.datasets&&nums.length>0){
+    const avg=nums.reduce((a,b)=>a+b,0)/nums.length;
+    const addRefLine=(enabled,val,color,label)=>{if(!enabled)return;cfg.data.datasets.push({type:'line',label,data:Array(cfg.data.labels?.length||5).fill(val),borderColor:color,borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false});};
+    addRefLine(al.avgLine,avg,al.avgColor||'#06B6D4','Average');
+    addRefLine(al.minLine,Math.min(...nums),al.minColor||'#22C55E','Min');
+    addRefLine(al.maxLine,Math.max(...nums),al.maxColor||'#EF4444','Max');
+    const sorted=[...nums].sort((a,b)=>a-b);
+    addRefLine(al.medLine,sorted[Math.floor(sorted.length/2)],al.medColor||'#F59E0B','Median');
+    if(al.pctLine){const idx=Math.floor(((al.pctValue||90)/100)*sorted.length);addRefLine(true,sorted[Math.min(idx,sorted.length-1)],al.pctColor||'#EC4899','P'+(al.pctValue||90));}
+    if(al.trendLine&&nums.length>1){
+      const n=nums.length,xi=Array.from({length:n},(_,i)=>i);
+      const mx=xi.reduce((a,b)=>a+b)/n,my=avg;
+      const b1=xi.reduce((s,x,i)=>s+(x-mx)*(nums[i]-my),0)/xi.reduce((s,x)=>s+(x-mx)**2,0.001);
+      const b0=my-b1*mx;
+      cfg.data.datasets.push({type:'line',label:'Trend',data:xi.map(x=>b0+b1*x),borderColor:al.trendColor||'#A78BFA',borderWidth:2,pointRadius:0,fill:false,borderDash:[6,3]});
+    }
+    (al.constLines||[]).forEach(l=>{cfg.data.datasets.push({type:'line',label:l.label||'Line',data:Array(cfg.data.labels?.length||5).fill(parseFloat(l.value)||0),borderColor:l.color||'#8B5CF6',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[5,5]});});
+    // Conditional formatting colors
+    if(fc.condFmtRules&&fc.condFmtRules.length&&cfg.data.datasets[0]){
+      cfg.data.datasets[0].backgroundColor=cfg.data.datasets[0].data.map(val=>{
+        for(const rule of fc.condFmtRules){
+          const rv=parseFloat(rule.value);
+          if(rule.condition==='is greater than'&&val>rv)return rule.color;
+          if(rule.condition==='is less than'&&val<rv)return rule.color;
+          if(rule.condition==='is greater than or equal to'&&val>=rv)return rule.color;
+          if(rule.condition==='is less than or equal to'&&val<=rv)return rule.color;
+          if(rule.condition==='is equal to'&&val===rv)return rule.color;
+          if(rule.condition==='is not equal to'&&val!==rv)return rule.color;
+          if(rule.condition==='is blank'&&(val==null||isNaN(val)))return rule.color;
+        }
+        return color+'BB';
+      });
+    }
+    if(fc.condFmtGrad&&cfg.data.datasets[0]){
+      const mn2=Math.min(...cfg.data.datasets[0].data),mx2=Math.max(...cfg.data.datasets[0].data);
+      const g=fc.condFmtGrad;
+      cfg.data.datasets[0].backgroundColor=cfg.data.datasets[0].data.map(v=>{
+        const t=mx2===mn2?0.5:(v-mn2)/(mx2-mn2);
+        return t<0.5?interpolateColor(g.min,g.mid,t*2):interpolateColor(g.mid,g.max,(t-0.5)*2);
+      });
+    }
+  }
+  return cfg;
+};
+function interpolateColor(c1,c2,t){
+  const r1=parseInt(c1.slice(1,3),16),g1=parseInt(c1.slice(3,5),16),b1=parseInt(c1.slice(5,7),16);
+  const r2=parseInt(c2.slice(1,3),16),g2=parseInt(c2.slice(3,5),16),b2=parseInt(c2.slice(5,7),16);
+  const r=Math.round(r1+(r2-r1)*t),g=Math.round(g1+(g2-g1)*t),b=Math.round(b1+(b2-b1)*t);
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+</script>
+
+<script>
+// ===== GLOBAL DM DATA SINGLETON =====
+window.DM = {
+  raw: [],
+  columns: [],
+  measures: [],
+  computed: {},
+  filters: { visual: {}, page: {}, report: {} },
+  init() {
+    this.raw = JSON.parse(localStorage.getItem('dm_dataset') || '[]').slice(0, 500);
+    this.columns = JSON.parse(localStorage.getItem('dm_columns') || '[]');
+    this.measures = JSON.parse(localStorage.getItem('dm_measures') || '[]');
+    this._evalMeasures();
+  },
+  _evalMeasures() {
+    this.measures.forEach(m => {
+      try {
+        const fn = new Function('rows', 'selectedRows', 'return (' + m.formula + ')(rows, rows)');
+        const result = fn(this.raw, this.raw);
+        if (Array.isArray(result)) {
+          this.computed[m.name] = result;
+          this.raw.forEach((r, i) => r[m.name] = result[i] ?? null);
+        } else {
+          this.raw.forEach(r => r[m.name] = result);
+        }
+        if (!this.columns.includes(m.name)) this.columns.push(m.name);
+      } catch(e) { console.warn('Measure eval error:', m.name, e); }
+    });
+  },
+  getFiltered(visualId) {
+    let rows = [...this.raw];
+    const vf = this.filters.visual[visualId];
+    if (vf && vf.field && vf.value !== undefined) {
+      rows = rows.filter(r => String(r[vf.field]) === String(vf.value));
+    }
+    Object.entries(this.filters.page || {}).forEach(([field, vals]) => {
+      if (!field.startsWith('_range_') && vals && vals.length) {
+        rows = rows.filter(r => vals.includes(String(r[field])));
+      }
+      if (field.startsWith('_range_')) {
+        const {field: f, lo, hi} = vals;
+        rows = rows.filter(r => { const v = parseFloat(r[f]); return !isNaN(v) && v >= lo && v <= hi; });
+      }
+    });
+    Object.entries(this.filters.report || {}).forEach(([field, vals]) => {
+      if (!field.startsWith('_range_') && vals && vals.length) {
+        rows = rows.filter(r => vals.includes(String(r[field])));
+      }
+    });
+    return rows;
+  }
+};
+
+// ===== AGGREGATION ENGINE =====
+function aggregate(rows, field, method) {
+  const vals = rows.map(r => r[field]).filter(v => v != null && v !== '');
+  const nums = vals.map(v => parseFloat(v)).filter(n => !isNaN(n));
+  switch ((method || 'SUM').toUpperCase()) {
+    case 'SUM':           return nums.reduce((a, b) => a + b, 0);
+    case 'AVERAGE':       return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+    case 'COUNT':         return vals.length;
+    case 'COUNT DISTINCT':return new Set(vals.map(String)).size;
+    case 'MIN':           return nums.length ? Math.min(...nums) : 0;
+    case 'MAX':           return nums.length ? Math.max(...nums) : 0;
+    case 'MEDIAN':        { const s = [...nums].sort((a,b)=>a-b); return s[Math.floor(s.length/2)] || 0; }
+    case 'NONE':          return vals;
+    default:              return nums.reduce((a, b) => a + b, 0);
+  }
+}
+
+function getSortedData(v, data, xField, yField, method) {
+  const fc = v.formatConfig || {};
+  const res = groupBy(data, xField, yField, method);
+  if(!fc.sortType) return res;
+  const combined = res.labels.map((l,i)=>({l, v:res.values[i]}));
+  if(fc.sortType==='val') combined.sort((a,b)=>(fc.sortDir==='desc'?b.v-a.v:a.v-b.v));
+  else combined.sort((a,b)=>(fc.sortDir==='desc'?String(b.l).localeCompare(String(a.l)):String(a.l).localeCompare(String(b.l))));
+  return { labels: combined.map(x=>x.l), values: combined.map(x=>x.v) };
+}
+function groupBy(rows, xField, yField, method) {
+  if (!xField) return { labels: [], values: [] };
+  const groups = {};
+  rows.forEach(r => {
+    const k = String(r[xField] ?? 'Unknown');
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+  let entries = Object.entries(groups);
+  // Default sort is desc by count if no yField, else desc by value
+  entries.sort((a, b) => b[1].length - a[1].length);
+  return {
+    labels: entries.map(e => e[0]),
+    values: entries.map(e => yField ? aggregate(e[1], yField, method) : e[1].length)
+  };
+}
+
+function groupByMultiSeries(rows, xField, legendField, yField, method) {
+  const xVals = [...new Set(rows.map(r => String(r[xField] ?? '')))].slice(0, 30);
+  const lVals = [...new Set(rows.map(r => String(r[legendField] ?? '')))].slice(0, 8);
+  return {
+    labels: xVals,
+    series: lVals.map(lv => ({
+      label: lv,
+      data: xVals.map(xv => {
+        const subset = rows.filter(r => String(r[xField]) === xv && String(r[legendField]) === lv);
+        return yField ? aggregate(subset, yField, method) : subset.length;
+      })
+    }))
+  };
+}
+
+// ===== GLOBAL CHART.JS TOOLTIP DEFAULTS =====
+function applyGlobalChartDefaults() {
+  Chart.defaults.color = '#9CA3AF';
+  Chart.defaults.font.family = 'Inter';
+  Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(3,3,5,0.92)';
+  Chart.defaults.plugins.tooltip.borderColor = 'rgba(255,255,255,0.1)';
+  Chart.defaults.plugins.tooltip.borderWidth = 1;
+  Chart.defaults.plugins.tooltip.borderRadius = 12;
+  Chart.defaults.plugins.tooltip.padding = 12;
+  Chart.defaults.plugins.tooltip.titleFont = { family: 'Outfit', size: 13, weight: 'bold' };
+  Chart.defaults.plugins.tooltip.bodyFont = { family: 'Inter', size: 12 };
+  Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+  Chart.defaults.plugins.tooltip.bodyColor = 'rgba(255,255,255,0.7)';
+  Chart.defaults.plugins.tooltip.displayColors = true;
+  Chart.defaults.plugins.tooltip.boxWidth = 10;
+  Chart.defaults.plugins.tooltip.boxHeight = 10;
+}
+
+// ===== EMPTY STATE =====
+function checkEmptyState() {
+  DM.init();
+  if (!DM.raw.length) {
+    const canvas = document.getElementById('builderCanvas');
+    if (canvas) {
+      canvas.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div style="text-align:center;background:rgba(255,255,255,.03);border:2px dashed rgba(139,92,246,.3);border-radius:24px;padding:48px;max-width:360px;">
+          <div style="width:64px;height:64px;background:rgba(139,92,246,.1);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+            <svg width="32" height="32" fill="none" stroke="#8B5CF6" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+          </div>
+          <h2 style="font-size:20px;font-weight:700;font-family:Outfit,sans-serif;margin-bottom:8px;">No Dataset Found</h2>
+          <p style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:24px;">Upload a dataset to start building your dashboard</p>
+          <a href="upload.html" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;background:linear-gradient(135deg,#8B5CF6,#3B82F6);border-radius:12px;font-weight:700;font-size:13px;color:white;text-decoration:none;">Upload Data</a>
+        </div>
+      </div>`;
+    }
+    return false;
+  }
+  return true;
+}
+
+// Patch window.addEventListener DOMContentLoaded to call DM.init first
+const _origInit = window.addEventListener;
+document.addEventListener('DOMContentLoaded', () => {
+  applyGlobalChartDefaults();
+  if (!checkEmptyState()) return;
+  // sync DM filters with STATE filters
+  if (STATE && STATE.filters) DM.filters = STATE.filters;
+});
+</script>
+<script>
+// ===== ENHANCED CHART BUILD (patches existing buildChartConfig) =====
+const _prevBuildChart = window.buildChartConfig;
+window.buildChartConfig = function(v, rawData, color, showLegend, showLabels) {
+  const data = DM.raw.length ? DM.getFiltered(v.id) : rawData;
+  const fc = v.formatConfig || {};
+  const wells = WELL_CONFIG[v.type] || [];
+  const xField = (v.fieldConfig[wells.includes('X Axis')?'X Axis':wells.includes('Category')?'Category':'Legend'] || [])[0] || (catFields[0] || numericFields[0] || '');
+  const yField = (v.fieldConfig[wells.includes('Y Axis')?'Y Axis':'Values'] || [])[0] || (numericFields[0] || '');
+  const legendField = (v.fieldConfig['Legend'] || [])[0] || '';
+  const aggMethod = fc.aggMethod || 'SUM';
+  const baseScales = {
+    x: { grid: { color: fc.xGrid !== false ? 'rgba(255,255,255,.04)' : 'transparent', display: fc.xGrid !== false }, ticks: { color: '#6B7280', font: { size: 9 } }, stacked: false },
+    y: { beginAtZero: true, grid: { color: fc.yGrid !== false ? 'rgba(255,255,255,.04)' : 'transparent', display: fc.yGrid !== false }, ticks: { color: '#6B7280', font: { size: 9 } }, reverse: fc.yInvert || false, stacked: false }
+  };
+  const baseOpts = {
+    responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+    plugins: {
+      legend: { display: fc.legend !== false && showLegend, position: fc.legendPos?.toLowerCase() || 'bottom', labels: { color: '#9CA3AF', boxWidth: 10, padding: 10, font: { size: 10 } } },
+      tooltip: {
+        callbacks: {
+          afterBody: (items) => {
+            const ttFields = v.fieldConfig['Tooltips'] || [];
+            if (!ttFields.length || !data.length) return [];
+            return ttFields.map(f => f + ': ' + (data[items[0]?.dataIndex]?.[f] ?? ''));
+          }
+        }
+      }
+    },
+    scales: baseScales,
+    onClick: (evt, els, chart) => handleChartClick(evt, els, chart, v, xField)
+  };
+
+  // ── WATERFALL ──
+  if (v.type === 'waterfall') {
+    const { labels, values } = getSortedData(v, data, xField, yField, aggMethod);
+    let running = 0;
+    const floatData = values.map((val, i) => {
+      const base = running; running += val;
+      return { base, val, isNeg: val < 0, isTotal: i === values.length - 1 };
+    });
+    return {
+      type: 'bar', data: {
+        labels,
+        datasets: [{
+          label: yField, data: floatData.map(d => [d.base, d.base + d.val]),
+          backgroundColor: floatData.map(d => d.isTotal ? color : d.isNeg ? '#EF4444BB' : '#22C55EBB'),
+          borderColor: floatData.map(d => d.isTotal ? color : d.isNeg ? '#EF4444' : '#22C55E'),
+          borderWidth: 1, borderRadius: 4
+        }]
+      },
+      options: { ...baseOpts, scales: { ...baseScales, y: { ...baseScales.y, stacked: false } } }
+    };
+  }
+
+  // ── FUNNEL ──
+  if (v.type === 'funnel') {
+    const { labels, values } = getSortedData(v, data, xField, yField, aggMethod);
+    const sorted = labels.map((l, i) => ({ l, v: values[i] })).sort((a, b) => b.v - a.v);
+    return {
+      type: 'bar', data: {
+        labels: sorted.map(e => e.l),
+        datasets: [{ label: yField, data: sorted.map(e => e.v), backgroundColor: COLORS, borderWidth: 0, borderRadius: 4 }]
+      },
+      options: { ...baseOpts, indexAxis: 'y', scales: { ...baseScales, x: { ...baseScales.x, beginAtZero: true }, y: { ...baseScales.y, beginAtZero: false } } }
+    };
+  }
+
+  // ── GAUGE ──
+  if (v.type === 'gauge') {
+    const vField = (v.fieldConfig['Value'] || [])[0] || (numericFields[0] || '');
+    const maxField = (v.fieldConfig['Maximum'] || [])[0];
+    const targetField = (v.fieldConfig['Target'] || [])[0];
+    const val = vField ? aggregate(data, vField, aggMethod) : 50;
+    const maxVal = maxField ? aggregate(data, maxField, 'MAX') : 100;
+    const targetVal = targetField ? aggregate(data, targetField, aggMethod) : null;
+    const pct = Math.min(100, Math.max(0, (val / (maxVal || 100)) * 100));
+    return {
+      type: 'doughnut', data: {
+        datasets: [{
+          data: [pct, 100 - pct],
+          backgroundColor: [color, 'rgba(255,255,255,.06)'],
+          borderWidth: 0, hoverOffset: 0
+        }]
+      },
+      options: {
+        ...baseOpts, rotation: -90, circumference: 180, cutout: '75%',
+        plugins: {
+          ...baseOpts.plugins, legend: { display: false },
+          tooltip: { enabled: false }
+        },
+        scales: {}
+      }
+    };
+  }
+
+  // ── TREEMAP ──
+  if (v.type === 'treemap') {
+    const grpField = (v.fieldConfig['Group'] || [])[0] || (catFields[0] || '');
+    const valField = (v.fieldConfig['Values'] || [])[0] || (numericFields[0] || '');
+    const freq = {};
+    data.forEach(r => { const k = String(r[grpField] || 'Other'); freq[k] = (freq[k] || 0) + (parseFloat(r[valField]) || 1); });
+    const tree = Object.entries(freq).map(([k, v]) => ({ key: k, value: v }));
+    return {
+      type: 'treemap', data: {
+        datasets: [{ label: grpField, tree, key: 'value', groups: ['key'], spacing: 2, borderWidth: 0,
+          backgroundColor: ctx => COLORS[ctx.dataIndex % COLORS.length] + 'CC',
+          labels: { display: true, formatter: ctx => ctx.raw.g, color: '#fff', font: { size: 10 } }
+        }]
+      },
+      options: { ...baseOpts, scales: {}, plugins: { ...baseOpts.plugins, legend: { display: false } } }
+    };
+  }
+
+  // ── COMBO (Bar + Line) ──
+  if (v.type === 'combo') {
+    const { labels, values } = getSortedData(v, data, xField, yField, aggMethod);
+    const lineField = (v.fieldConfig['Line Y'] || [])[0] || (numericFields[1] || numericFields[0] || '');
+    const lineVals = labels.map(lbl => {
+      const subset = data.filter(r => String(r[xField]) === lbl);
+      return lineField ? aggregate(subset, lineField, aggMethod) : 0;
+    });
+    return {
+      type: 'bar', data: {
+        labels,
+        datasets: [
+          { type: 'bar', label: yField, data: values, backgroundColor: color + 'BB', borderColor: color, borderWidth: 1, borderRadius: 4 },
+          { type: 'line', label: lineField, data: lineVals, borderColor: '#06B6D4', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 3, tension: 0.4, yAxisID: 'y1' }
+        ]
+      },
+      options: { ...baseOpts, scales: { ...baseScales, y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#06B6D4', font: { size: 9 } } } } }
+    };
+  }
+
+  // ── MULTI-SERIES BAR/COL (when legend field set) ──
+  if (['clustered-bar','stacked-bar','clustered-col','stacked-col'].includes(v.type) && legendField) {
+    const { labels, series } = groupByMultiSeries(data, xField, legendField, yField, aggMethod);
+    const isStacked = v.type.includes('stacked');
+    const isHoriz = v.type.includes('bar');
+    return {
+      type: 'bar', data: {
+        labels,
+        datasets: series.map((s, i) => ({ label: s.label, data: s.data, backgroundColor: COLORS[i % COLORS.length] + 'CC', borderColor: COLORS[i % COLORS.length], borderWidth: 1, borderRadius: isStacked ? 0 : 4 }))
+      },
+      options: { ...baseOpts, indexAxis: isHoriz ? 'y' : 'x', scales: { ...baseScales, x: { ...baseScales.x, stacked: isStacked }, y: { ...baseScales.y, stacked: isStacked } } }
+    };
+  }
+
+  // ── BOX PLOT (approximated with custom drawing) ──
+  if (v.type === 'boxplot') {
+    const cats = [...new Set(data.map(r => String(r[xField] || 'All')))].slice(0, 10);
+    const boxData = cats.map(cat => {
+      const subset = data.filter(r => String(r[xField]) === cat);
+      const nums = subset.map(r => parseFloat(r[yField])).filter(n => !isNaN(n)).sort((a, b) => a - b);
+      if (!nums.length) return null;
+      const q1 = nums[Math.floor(nums.length * 0.25)];
+      const q3 = nums[Math.floor(nums.length * 0.75)];
+      const med = nums[Math.floor(nums.length * 0.5)];
+      const iqr = q3 - q1;
+      return { min: q1 - 1.5 * iqr, q1, med, q3, max: q3 + 1.5 * iqr, mean: nums.reduce((a,b)=>a+b,0)/nums.length };
+    });
+    // Render as a bar approximation showing Q1-Q3 range
+    return {
+      type: 'bar', data: {
+        labels: cats,
+        datasets: [
+          { label: 'Q1-Q3', data: boxData.map(d => d ? [d.q1, d.q3] : [0, 0]), backgroundColor: color + '55', borderColor: color, borderWidth: 2, borderRadius: 3 },
+          { type: 'line', label: 'Median', data: boxData.map(d => d ? d.med : 0), borderColor: '#F59E0B', borderWidth: 2, pointRadius: 5, pointBackgroundColor: '#F59E0B', showLine: false }
+        ]
+      },
+      options: { ...baseOpts, scales: { ...baseScales, y: { ...baseScales.y, stacked: false } } }
+    };
+  }
+
+  // Fall through to original for all other types
+  return _prevBuildChart.call(this, v, rawData, color, showLegend, showLabels);
+};
+
+// ===== MATRIX PIVOT TABLE =====
+function renderMatrix(v, body, data) {
+  const rowField = (v.fieldConfig['Rows'] || [])[0] || (catFields[0] || '');
+  const colField = (v.fieldConfig['Columns'] || [])[0] || (catFields[1] || catFields[0] || '');
+  const valField = (v.fieldConfig['Values'] || [])[0] || (numericFields[0] || '');
+  const aggM = v.formatConfig?.aggMethod || 'SUM';
+  if (!rowField || !colField) { body.innerHTML = '<p class="text-[10px] text-gray-600 p-2">Drop Row Groups and Columns into field wells</p>'; return; }
+  const rowVals = [...new Set(data.map(r => String(r[rowField] || '')))].filter(Boolean).slice(0, 20);
+  const colVals = [...new Set(data.map(r => String(r[colField] || '')))].filter(Boolean).slice(0, 12);
+  const fc = v.formatConfig || {};
+  let html = '<div class="overflow-auto h-full"><table class="w-full text-[10px] border-collapse">';
+  html += '<thead><tr><th class="text-left px-2 py-1 text-gray-500 border-b border-r border-white/5 sticky top-0 left-0 z-10 bg-dark/95">' + rowField + '</th>';
+  colVals.forEach(c => html += `<th class="text-right px-2 py-1 text-gray-500 border-b border-white/5 sticky top-0 bg-dark/95 font-bold" style="background:${fc.hdrBg||'rgba(255,255,255,.05)'};color:${fc.hdrColor||'#9CA3AF'}">${c}</th>`);
+  html += '<th class="text-right px-2 py-1 text-primary border-b border-white/5 sticky top-0 bg-dark/95 font-bold">Total</th></tr></thead><tbody>';
+  const grandTotals = colVals.map(() => 0); let grandTotal = 0;
+  rowVals.forEach((rv, ri) => {
+    const rowColor = fc.altRows && ri % 2 === 1 ? 'background:rgba(255,255,255,.025);' : '';
+    html += `<tr style="${rowColor}"><td class="px-2 py-1 border-b border-r border-white/5 font-bold text-gray-300 sticky left-0" style="background:${fc.altRows&&ri%2===1?'rgba(20,20,35,.9)':'rgba(12,12,25,.9)'}">${rv}</td>`;
+    let rowTotal = 0;
+    colVals.forEach((cv, ci) => {
+      const subset = data.filter(r => String(r[rowField]) === rv && String(r[colField]) === cv);
+      const val = valField ? aggregate(subset, valField, aggM) : subset.length;
+      grandTotals[ci] += val; rowTotal += val; grandTotal += val;
+      const fmt = typeof val === 'number' ? val.toLocaleString(undefined, { maximumFractionDigits: 2 }) : val;
+      html += `<td class="text-right px-2 py-1 border-b border-white/5">${fmt}</td>`;
+    });
+    html += `<td class="text-right px-2 py-1 border-b border-white/5 font-bold text-primary">${rowTotal.toLocaleString(undefined, {maximumFractionDigits:2})}</td></tr>`;
+  });
+  html += '<tr class="font-bold" style="background:rgba(139,92,246,.08);"><td class="px-2 py-1 text-primary border-t border-white/10 sticky left-0" style="background:rgba(139,92,246,.12)">Total</td>';
+  grandTotals.forEach(t => html += `<td class="text-right px-2 py-1 text-primary border-t border-white/10">${t.toLocaleString(undefined,{maximumFractionDigits:2})}</td>`);
+  html += `<td class="text-right px-2 py-1 text-primary border-t border-white/10">${grandTotal.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`;
+  html += '</tbody></table></div>';
+  body.innerHTML = html;
+}
+
+// Patch renderVisualContent to use DM.getFiltered and enhanced renders
+const _origRenderVC = window.renderVisualContent;
+window.renderVisualContent = function(v) {
+  if (!v) return;
+  const body = document.getElementById('body-' + v.id); if (!body) return;
+  // Use DM filtered data if available
+  const data = DM.raw.length ? DM.getFiltered(v.id) : JSON.parse(localStorage.getItem('dm_dataset') || '[]');
+  const color = v.formatConfig?.color || '#8B5CF6';
+  if (v.type === 'matrix') { renderMatrix(v, body, data); return; }
+  _origRenderVC.call(this, v);
+};
+</script>
+<script>
+// ===== READING VIEW =====
+const _origToggleRV = window.toggleReadingView;
+window.toggleReadingView = function() {
+  isReadingView = !isReadingView;
+  const leftPanel = document.querySelector('.dashboard-container > main > div.flex > div:first-child');
+  const rightPanel = document.querySelector('.dashboard-container > main > div.flex > div:last-child');
+  const ribbon = document.querySelector('.dashboard-container > main > div:nth-child(2)');
+  if (leftPanel) leftPanel.style.display = isReadingView ? 'none' : '';
+  if (rightPanel) rightPanel.style.display = isReadingView ? 'none' : '';
+  const btn = document.getElementById('readingViewBtn');
+  if (btn) {
+    btn.style.borderColor = isReadingView ? '#06B6D4' : '';
+    btn.style.color = isReadingView ? '#06B6D4' : '';
+    btn.innerHTML = isReadingView
+      ? '<i data-lucide="edit" class="w-3 h-3"></i>Edit Mode'
+      : '<i data-lucide="eye" class="w-3 h-3"></i>Reading View';
+  }
+  document.querySelectorAll('.resize-handle').forEach(h => h.style.display = isReadingView ? 'none' : '');
+  document.querySelectorAll('.tile-header button').forEach(b => b.style.display = isReadingView ? 'none' : '');
+  lucide.createIcons();
+  showToast(isReadingView ? 'Reading view — click data points to cross-filter' : 'Edit mode', 'blue');
+};
+
+// ===== CROSS-FILTER ENGINE (enhanced) =====
+const _origHandleCC = window.handleChartClick;
+window.handleChartClick = function(evt, elements, chart, v, xField) {
+  if (!elements.length) return;
+  const idx = elements[0].index;
+  const label = chart.data.labels?.[idx];
+  if (!label && label !== 0) return;
+  const vid = v.id;
+  if (DM.filters.visual[vid]?.value === String(label)) {
+    delete DM.filters.visual[vid];
+    if (STATE.filters) delete STATE.filters.visual[vid];
+    showToast('Cross-filter cleared', 'blue');
+  } else {
+    DM.filters.visual[vid] = { field: xField, value: String(label) };
+    if (STATE.filters) STATE.filters.visual[vid] = DM.filters.visual[vid];
+    showToast('Filtering: ' + xField + ' = ' + label, 'blue');
+  }
+  crossFilterActive = Object.keys(DM.filters.visual).length ? { vid, field: xField, value: label } : null;
+  refreshAllVisuals();
+};
+
+function refreshAllVisuals() {
+  const visuals = currentPage().visuals;
+  visuals.forEach(v => {
+    const tile = document.getElementById('tile-' + v.id);
+    const hasFilter = DM.filters.visual[v.id];
+    const otherFiltered = Object.keys(DM.filters.visual).some(id => id !== v.id);
+    if (tile) tile.style.opacity = (otherFiltered && !hasFilter) ? '0.55' : '1';
+    renderVisualContent(v);
+  });
+}
+
+// ===== EXPORT PDF =====
+window.exportPDF = async function() {
+  if (typeof html2canvas === 'undefined' || typeof jspdf === 'undefined') {
+    showToast('PDF libraries loading...', 'blue'); return;
+  }
+  showToast('Generating PDF...', 'blue');
+  try {
+    const canvas = document.getElementById('canvasWrapper');
+    const img = await html2canvas(canvas, { backgroundColor: '#030305', scale: 1.5, useCORS: true, logging: false });
+    const { jsPDF } = jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    pdf.setFillColor(3, 3, 5); pdf.rect(0, 0, pageW, pageH, 'F');
+    pdf.setTextColor(139, 92, 246); pdf.setFontSize(16); pdf.setFont('helvetica', 'bold');
+    pdf.text('DataMind AI — Dashboard', 14, 14);
+    pdf.setFontSize(9); pdf.setTextColor(156, 163, 175); pdf.setFont('helvetica', 'normal');
+    const pg = STATE.pages[STATE.activePage];
+    pdf.text('Page: ' + (pg?.name || 'Page 1') + '   Exported: ' + new Date().toLocaleString(), 14, 20);
+    const imgW = pageW - 28;
+    const imgH = (img.height / img.width) * imgW;
+    const finalH = Math.min(imgH, pageH - 30);
+    pdf.addImage(img.toDataURL('image/png'), 'PNG', 14, 26, imgW, finalH);
+    const fname = (localStorage.getItem('dm_filename') || 'dashboard').replace(/\.[^.]+$/, '');
+    pdf.save(fname + '_dashboard.pdf');
+    showToast('PDF exported!', 'green');
+  } catch(e) { showToast('PDF error: ' + e.message, 'red'); }
+};
+
+// Patch exportPdfBtn to use new function
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('exportPdfBtn');
+  if (btn) { btn.onclick = null; btn.addEventListener('click', exportPDF); }
+});
+
+// ===== DEBOUNCE FORMAT CHANGES =====
+let _fmtDebounce = null;
+const _origSetFc = window.setFc;
+window.setFc = function(key, val) {
+  if (!selectedVisuals.length) return;
+  const v = getVisual(selectedVisuals[0]); if (!v) return;
+  v.formatConfig = v.formatConfig || {}; v.formatConfig[key] = val;
+  clearTimeout(_fmtDebounce);
+  _fmtDebounce = setTimeout(() => { renderVisualContent(v); pushHistory(); }, 150);
+};
+
+// ===== TABLE: SORTABLE + PAGINATION =====
+const tableSortState = {};
+const tablePageState = {};
+const _origRenderTable = window.renderTable;
+window.renderTable = function(v, body, data) {
+  const colFields = v.fieldConfig['Columns'] || v.fieldConfig['Rows'] || [];
+  const valFields = v.fieldConfig['Values'] || [];
+  const allFields = [...colFields, ...valFields];
+  const cols = allFields.length ? allFields : (DM.columns.slice(0, 6));
+  if (!cols.length) { body.innerHTML = '<p class="text-[10px] text-gray-600 p-2">Drop columns into field wells</p>'; return; }
+  const vid = v.id;
+  if (!tableSortState[vid]) tableSortState[vid] = { col: null, dir: 1 };
+  if (!tablePageState[vid]) tablePageState[vid] = 0;
+  const PAGE = 50;
+  let rows = applyFilters(data, vid);
+  const ss = tableSortState[vid];
+  if (ss.col) rows = [...rows].sort((a, b) => { const av = a[ss.col] ?? '', bv = b[ss.col] ?? ''; const an = parseFloat(av), bn = parseFloat(bv); return (!isNaN(an) && !isNaN(bn) ? (an - bn) : String(av).localeCompare(String(bv))) * ss.dir; });
+  const page = tablePageState[vid]; const slice = rows.slice(0, PAGE * (page + 1));
+  const fc = v.formatConfig || {};
+  const gridBorder = fc.tableGrid !== false ? 'border-white/5' : 'border-transparent';
+  let html = '<div class="overflow-auto h-full flex flex-col"><table class="w-full text-[10px] border-collapse flex-1">';
+  html += '<thead><tr>' + cols.map(c => {
+    const isSorted = ss.col === c; const dir = isSorted ? (ss.dir === 1 ? '▲' : '▼') : '';
+    return `<th class="text-left px-2 py-1.5 border-b ${gridBorder} sticky top-0 cursor-pointer select-none hover:text-white transition-colors" style="background:${fc.hdrBg||'rgba(20,20,35,.95)'};color:${fc.hdrColor||'#9CA3AF'};font-weight:${fc.hdrBold!==false?700:400}" onclick="sortTable('${vid}','${c}')">${c} ${dir}</th>`;
+  }).join('') + '</tr></thead><tbody>';
+  slice.forEach((r, ri) => {
+    const bg = fc.altRows && ri % 2 === 1 ? 'rgba(255,255,255,.02)' : '';
+    html += `<tr style="background:${bg}" class="hover:bg-white/5 transition-colors">` + cols.map(c => `<td class="px-2 py-1 border-b ${gridBorder} truncate" style="max-width:100px;color:${fc.valColor||'#E5E7EB'}">${r[c] ?? ''}</td>`).join('') + '</tr>';
+  });
+  // Totals row
+  html += '<tr style="background:rgba(139,92,246,.08);font-weight:700;">';
+  cols.forEach(c => { const nums = rows.map(r => parseFloat(r[c])).filter(n => !isNaN(n)); html += `<td class="px-2 py-1.5 border-t border-white/10 text-primary">${nums.length ? nums.reduce((a,b)=>a+b,0).toLocaleString(undefined,{maximumFractionDigits:2}) : ''}</td>`; });
+  html += '</tr></tbody></table>';
+  if (rows.length > slice.length) html += `<button onclick="tablePageState['${vid}']=(tablePageState['${vid}']||0)+1;renderVisualContent(getVisual('${vid}'))" class="text-[10px] text-primary py-1.5 hover:underline text-center flex-shrink-0">Show more (${rows.length - slice.length} remaining)</button>`;
+  html += '</div>';
+  body.innerHTML = html;
+};
+function sortTable(vid, col) {
+  const ss = tableSortState[vid] = tableSortState[vid] || { col: null, dir: 1 };
+  if (ss.col === col) ss.dir *= -1; else { ss.col = col; ss.dir = 1; }
+  tablePageState[vid] = 0;
+  const v = getVisual(vid); if (v) renderVisualContent(v);
+}
+function showSortMenu(e,vid){
+  e.stopPropagation();
+  const m=document.createElement('div'); m.className='ctx-menu';
+  m.style.left=e.clientX+'px'; m.style.top=e.clientY+'px';
+  m.innerHTML=`<div class="ctx-item" onclick="setSort('${vid}','val','desc')">Sort by Value (Desc)</div>
+               <div class="ctx-item" onclick="setSort('${vid}','val','asc')">Sort by Value (Asc)</div>
+               <div class="ctx-item" onclick="setSort('${vid}','lbl','asc')">Sort by Label (A-Z)</div>
+               <div class="ctx-item" onclick="setSort('${vid}','lbl','desc')">Sort by Label (Z-A)</div>`;
+  document.body.appendChild(m);
+  setTimeout(()=>document.addEventListener('click',()=>m.remove(),{once:true}),50);
+}
+function setSort(vid,type,dir){
+  const v=getVisual(vid); if(!v)return;
+  v.formatConfig=v.formatConfig||{};
+  v.formatConfig.sortType=type; v.formatConfig.sortDir=dir;
+  renderVisualContent(v); showToast('Sorted visual','blue');
+}
+</script>
+
+
+
+
+
+
+

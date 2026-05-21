@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMind AI — Reports</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Config -->
+    <script src="config.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="index.css">
+    <script src="datastore.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#3B82F6',
+                        accent: '#06B6D4',
+                        dark: '#030305',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .report-scroll::-webkit-scrollbar { width: 4px; }
+        .report-scroll::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        
+        .report-page {
+            min-height: 1122px; /* A4 Height at 96dpi */
+            height: auto;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+        }
+        
+        .template-card.active {
+            border-color: var(--primary);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        .progress-bar {
+            height: 4px;
+            background: var(--primary);
+            animation: progress 3s linear forwards;
+        }
+    </style>
+</head>
+<body class="bg-dark text-gray-100 overflow-hidden">
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar glass border-r border-white/5 p-6 flex flex-col">
+            <div class="flex items-center gap-2 mb-10">
+                <div class="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="brain" class="w-5 h-5 text-white"></i>
+                </div>
+                <span class="text-xl font-bold font-['Outfit'] tracking-tight">DataMind <span class="text-primary">AI</span></span>
+            </div>
+
+            <nav class="space-y-2 flex-grow overflow-y-auto pr-2">
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4 px-2">Main</div>
+              <a href="dashboard.html" class="nav-link">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard</a>
+              <a href="upload.html" class="nav-link">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Upload Data</a>
+              <a href="preprocessing.html" class="nav-link">
+                <i data-lucide="filter" class="w-5 h-5"></i> Preprocessing</a>
+                
+                
+              <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-6 mb-4 px-2">Analysis</div>
+              <a href="visualization.html" class="nav-link">
+                <i data-lucide="pie-chart" class="w-5 h-5"></i> Visualization</a>
+              <a href="chatbot.html" class="nav-link">
+                <i data-lucide="message-square" class="w-5 h-5"></i> AI Chat</a>
+              <a href="report.html" class="nav-link active">
+                <i data-lucide="file-text" class="w-5 h-5"></i> Reports</a>
+              <a href="ml-model.html" class="nav-link">
+                <i data-lucide="cpu" class="w-5 h-5"></i> ML Model</a>
+              <a href="contact.html" class="nav-link">
+                <i data-lucide="mail" class="w-5 h-5"></i> Contact</a>
+            </nav>
+
+            <div class="mt-auto space-y-2 pt-6 border-t border-white/5">
+                <a href="settings.html" class="nav-link"><i data-lucide="settings" class="w-5 h-5"></i> Settings</a>
+                <a id="logoutBtn" href="#" class="nav-link text-red-400 hover:bg-red-400/5"><i data-lucide="log-out" class="w-5 h-5"></i> Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content relative bg-dark/50 flex flex-col h-screen overflow-hidden">
+            <!-- Header -->
+            <header class="glass border-b border-white/5 py-4 px-8 flex justify-between items-center">
+                
+                <div class="flex items-center gap-4"><button id="hamburgerBtn" style="display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;width:34px;height:34px;background:transparent;border:none;cursor:pointer;flex-shrink:0;border-radius:8px;padding:4px;margin-right:4px;" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='transparent'"><span id="hb1" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb2" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span><span id="hb3" style="display:block;width:20px;height:2px;background:#9CA3AF;border-radius:2px;transition:transform 0.25s,opacity 0.25s;"></span></button>
+                    <div class="p-2 bg-primary/10 rounded-lg">
+                        <i data-lucide="file-text" class="w-5 h-5 text-primary"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold font-['Outfit']">Report Generation</h1>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Workspace / <span id="reportHeaderFilename">No dataset loaded</span></p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-xl">
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Template:</span>
+                        <select id="templateSelect" class="bg-transparent text-xs font-bold focus:outline-none cursor-pointer">
+                            <option value="executive">Executive Summary</option>
+                            <option value="technical">Technical Deep Dive</option>
+                            <option value="marketing">Marketing Performance</option>
+                        </select>
+                    </div>
+                    <button id="generateBtn" onclick="generateReport()" class="btn-primary px-6 py-2 rounded-xl text-sm font-bold flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4" id="refresh-icon"></i> Generate Report
+                    </button>
+                    
+                    <div class="relative ml-2">
+                        <div id="profileDropdownBtn" class="flex items-center gap-3 pl-6 border-l border-white/5 group cursor-pointer">
+                            <div class="w-10 h-10 rounded-full bg-gradient-primary p-[2px]">
+                                <img src="https://ui-avatars.com/api/?name=John+Doe&background=random" class="w-full h-full rounded-full bg-dark p-0.5 user-avatar-display" alt="Profile">
+                            </div>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500 ml-1"></i>
+                        </div>
+                        
+                        <!-- Profile Dropdown -->
+                        <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 glass border border-white/10 rounded-2xl shadow-2xl py-2 z-50">
+                            <div class="px-4 py-3 border-b border-white/5">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-1">Account</p>
+                                <p class="text-xs font-medium truncate user-name-display">John Doe</p>
+                            </div>
+                            <div class="py-1">
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="user" class="w-4 h-4"></i> Profile
+                                </a>
+                                <a href="settings.html" class="flex items-center gap-3 px-4 py-2 text-xs text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                                    <i data-lucide="settings" class="w-4 h-4"></i> Settings
+                                </a>
+                            </div>
+                            <div class="h-px bg-white/5 my-1"></div>
+                            <button id="dropdownLogoutBtn" class="w-full flex items-center gap-3 px-4 py-2 text-xs text-red-400 hover:bg-red-400/5 transition-colors text-left">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-grow flex overflow-hidden">
+                <!-- Center: Report Preview -->
+                <div class="flex-grow overflow-y-auto p-12 bg-black/40 report-scroll flex justify-center">
+                    <div class="w-full max-w-4xl space-y-12 pb-24">
+                        <!-- Progress Bar (hidden by default) -->
+                        <div id="exportStatus" class="hidden glass p-8 rounded-2xl border border-primary/30 max-w-md mx-auto mb-12 animate-slide-up">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-sm font-bold flex items-center gap-2"><i data-lucide="loader" class="w-4 h-4 animate-spin text-primary"></i> <span id="statusText">Generating Report...</span></h3>
+                            </div>
+                            <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                <div class="progress-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Report Preview Container -->
+                        <div id="reportPreview" class="report-page p-16 rounded-sm relative overflow-hidden animate-slide-up">
+                            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-primary"></div>
+
+                            <!-- Default placeholder content -->
+                            <div id="reportPlaceholder">
+                                <div class="flex justify-between items-start mb-16">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+                                            <i data-lucide="brain" class="w-6 h-6 text-white"></i>
+                                        </div>
+                                        <span class="text-2xl font-bold font-['Outfit']">DataMind <span class="text-primary">AI</span></span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Report ID</div>
+                                        <div class="text-xs font-mono" id="reportId">#DM-2024-0082</div>
+                                    </div>
+                                </div>
+                                <div class="mb-12">
+                                    <h1 class="text-4xl font-bold font-['Outfit'] mb-4">Data Analysis Report</h1>
+                                    <p class="text-gray-400 max-w-2xl leading-relaxed" id="reportSubtitle">Click "Generate Report" to create an AI-powered analysis of your dataset.</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-8 mb-12">
+                                    <div class="space-y-2">
+                                        <h3 class="text-xs font-bold text-primary uppercase tracking-widest">Dataset</h3>
+                                        <div class="p-6 bg-white/5 border border-white/5 rounded-2xl text-xs text-gray-400 leading-relaxed italic" id="reportDatasetMeta">No dataset loaded</div>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <h3 class="text-xs font-bold text-accent uppercase tracking-widest">Quick Stats</h3>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div class="p-4 bg-white/2 rounded-xl border border-white/5">
+                                                <div class="text-[10px] text-gray-500 mb-1">Rows</div>
+                                                <div class="text-xl font-bold text-gradient" id="kpiRows">â€”</div>
+                                            </div>
+                                            <div class="p-4 bg-white/2 rounded-xl border border-white/5">
+                                                <div class="text-[10px] text-gray-500 mb-1">Columns</div>
+                                                <div class="text-xl font-bold text-green-500" id="kpiCols">â€”</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="h-64 glass p-8 rounded-2xl border border-white/5">
+                                    <canvas id="reportChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- AI Generated Content (injected here) -->
+                            <div id="aiReportContent" class="hidden text-gray-300 space-y-6 p-8"></div>
+                        </div>
+
+                        <!-- Page 2 Preview (Dynamic Footer) -->
+                        <div class="report-page p-16 rounded-sm opacity-50 transform scale-95 origin-top animate-slide-up" style="animation-delay: 0.2s">
+                            <div class="flex items-center gap-2 mb-8">
+                                <i data-lucide="trending-up" class="w-5 h-5 text-primary"></i>
+                                <h3 class="font-bold">Appendix: Statistical Methodology</h3>
+                            </div>
+                            <div class="space-y-6">
+                                <p class="text-xs text-gray-500 italic">This section will be populated with advanced correlations and regional performance metrics upon generation.</p>
+                                <div class="space-y-4">
+                                    <div class="h-4 w-3/4 bg-white/5 rounded-full"></div>
+                                    <div class="h-4 w-1/2 bg-white/5 rounded-full"></div>
+                                    <div class="h-32 w-full bg-white/5 rounded-2xl border border-dashed border-white/10"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Export Panel -->
+                <aside class="w-80 glass border-l border-white/5 p-8 flex flex-col gap-8">
+                    <section class="space-y-4">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="download" class="w-3 h-3"></i> Export Options
+                        </h3>
+                        <div class="space-y-3">
+                            <button id="pdfDownloadBtn" onclick="downloadPDF()" class="w-full btn-primary py-4 rounded-2xl font-bold flex items-center justify-center gap-3 group">
+                                <i data-lucide="file-down" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                                Export as PDF
+                            </button>
+                            <button onclick="startExport('Charts Package')" class="w-full btn-secondary py-4 rounded-2xl font-bold flex items-center justify-center gap-3 group">
+                                <i data-lucide="image" class="w-5 h-5 group-hover:text-primary transition-colors"></i>
+                                Download Charts
+                            </button>
+                            <button onclick="startExport('Cleaned Dataset')" class="w-full btn-secondary py-4 rounded-2xl font-bold flex items-center justify-center gap-3 group">
+                                <i data-lucide="database" class="w-5 h-5 group-hover:text-accent transition-colors"></i>
+                                Export Dataset
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="space-y-4">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest flex items-center gap-2">
+                            <i data-lucide="history" class="w-3 h-3"></i> Export History
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="p-4 glass rounded-xl border border-white/5 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="file-check" class="w-4 h-4 text-green-500"></i>
+                                    <div>
+                                        <div class="text-[10px] font-bold">Executive_Q1.pdf</div>
+                                        <div class="text-[8px] text-gray-500">2.4 MB â€¢ 2h ago</div>
+                                    </div>
+                                </div>
+                                <button class="text-gray-500 hover:text-white"><i data-lucide="download" class="w-3 h-3"></i></button>
+                            </div>
+                            <div class="p-4 glass rounded-xl border border-white/5 flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="file-check" class="w-4 h-4 text-green-500"></i>
+                                    <div>
+                                        <div class="text-[10px] font-bold">Sales_Data_Clean.csv</div>
+                                        <div class="text-[8px] text-gray-500">12 MB â€¢ 5h ago</div>
+                                    </div>
+                                </div>
+                                <button class="text-gray-500 hover:text-white"><i data-lucide="download" class="w-3 h-3"></i></button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- AI Assistant Tip -->
+                    <div class="mt-auto p-5 glass rounded-2xl border border-primary/20 bg-primary/5">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="sparkles" class="w-4 h-4 text-primary"></i>
+                            <span class="text-xs font-bold">AI Pro Tip</span>
+                        </div>
+                        <p class="text-[10px] text-gray-400 leading-relaxed">
+                            Generating a **Technical Deep Dive** report can help identify specific feature correlations for your engineering team.
+                        </p>
+                    </div>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripting -->
+    <script>
+        // â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const GEMINI_API_KEY = CONFIG.geminiApiKey;
+        const GEMINI_ENDPOINT = `${CONFIG.geminiEndpoint}${CONFIG.geminiModel}:generateContent?key=${GEMINI_API_KEY}`;
+
+        lucide.createIcons();
+
+        // â”€â”€ Load dataset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const dmDataset       = JSON.parse(localStorage.getItem('dm_dataset') || 'null');
+        const dmColumns       = JSON.parse(localStorage.getItem('dm_columns') || '[]');
+        const dmFilename      = localStorage.getItem('dm_filename') || 'dataset.csv';
+        const dmRowcount      = localStorage.getItem('dm_rowcount') || '0';
+        const dmColcount      = localStorage.getItem('dm_colcount') || '0';
+        const dmMissing       = localStorage.getItem('dm_missing')  || '0';
+        const dmTargetColumn  = localStorage.getItem('dm_target_column') || '';
+        const dmProblemType   = localStorage.getItem('dm_problem_type')  || '';
+
+        if (!dmDataset || dmDataset.length === 0) {
+            window.location.href = 'upload.html';
+        }
+
+        // â”€â”€ Update UI with real dataset info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        document.getElementById('reportHeaderFilename').innerText = dmFilename;
+        const idEl = document.getElementById('reportId');
+        if (idEl) idEl.innerText = '#DM-' + Date.now().toString().slice(-6);
+        const subEl = document.getElementById('reportSubtitle');
+        if (subEl) subEl.innerText = `Click "Generate Report" to create an AI-powered analysis of ${dmFilename}.`;
+        const metaEl = document.getElementById('reportDatasetMeta');
+        if (metaEl) metaEl.innerText = `${dmFilename} - ${dmRowcount} rows x ${dmColcount} columns - ${dmMissing} missing values`;
+        const rowEl = document.getElementById('kpiRows');
+        if (rowEl) rowEl.innerText = parseInt(dmRowcount).toLocaleString();
+        const colEl = document.getElementById('kpiCols');
+        if (colEl) colEl.innerText = dmColcount;
+
+        // â”€â”€ Chart initialization â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const chartCtx = document.getElementById('reportChart');
+        if (chartCtx) {
+            const nums = dmDataset
+                ? dmColumns.map(c => ({ col: c, vals: dmDataset.slice(0,6).map(r => parseFloat(r[c])).filter(v => !isNaN(v)) }))
+                           .find(x => x.vals.length >= 3)
+                : null;
+            new Chart(chartCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: nums ? nums.vals.map((_, i) => i + 1) : ['Apr','May','Jun'],
+                    datasets: [{ label: nums ? nums.col : 'Revenue',
+                        data: nums ? nums.vals : [150,220,280],
+                        borderColor: '#8B5CF6', backgroundColor: 'rgba(139,92,246,0.1)',
+                        fill: true, tension: 0.4 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } } }
+            });
+        }
+
+        // â”€â”€ Template prompts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        const templatePrompts = {
+            executive: 'Focus on high-level business metrics, ROI, executive-level KPIs, and strategic impact. Use business language suitable for C-suite stakeholders.',
+            technical: 'Focus on statistical details, data distributions, correlation analysis, feature engineering opportunities, and data science specifics. Use precise technical language.',
+            marketing:  'Focus on customer segments, market trends, growth opportunities, conversion metrics, and actionable marketing insights. Use marketing-oriented language.'
+        };
+
+        // â”€â”€ Generate Report â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        async function generateReport() {
+            const template    = document.getElementById('templateSelect').value;
+            const genBtn      = document.getElementById('generateBtn');
+            const icon        = document.getElementById('refresh-icon');
+            const statusDiv   = document.getElementById('exportStatus');
+            const statusText  = document.getElementById('statusText');
+
+            // UI: show loading
+            genBtn.disabled = true;
+            icon.classList.add('animate-spin');
+            statusDiv.classList.remove('hidden');
+            statusText.innerText = 'Calling Gemini AI...';
+
+            const mlLine = dmTargetColumn
+                ? `ML target column: ${dmTargetColumn} (${dmProblemType || 'classification'} task).`
+                : '';
+            const templateSuffix = templatePrompts[template] || templatePrompts.executive;
+
+            const prompt = `Create a professional data analysis report for a dataset called "${dmFilename}" with ${dmRowcount} rows, ${dmColcount} columns, and ${dmMissing} missing values.
+Columns: ${dmColumns.join(', ')}.
+${mlLine}
+${templateSuffix}
+
+Write these sections in HTML format using ONLY <h3>, <p>, <ul>, <li>, <strong>, <em> tags:
+<section id='exec-summary'><h3>Executive Summary</h3><p>2-3 sentence overview of the dataset and key findings.</p></section>
+<section id='key-findings'><h3>Key Findings</h3><ul><li>3-4 specific bullet points about the data</li></ul></section>
+<section id='data-quality'><h3>Data Quality Assessment</h3><p>Assessment of the ${dmMissing} missing values and overall data quality.</p></section>
+<section id='recommendations'><h3>Recommendations</h3><ul><li>3-4 actionable recommendations</li></ul></section>
+Return ONLY the HTML sections. No markdown, no code blocks, no extra text.`;
+
+            try {
+                if (!GEMINI_API_KEY || GEMINI_API_KEY.length < 10 || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
+                    throw new Error("API Key Missing: Please update your key in config.js and REFRESH this page.");
+                }
+
+                statusText.innerText = 'Generating AI content...';
+                const response = await fetch(GEMINI_ENDPOINT, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: { maxOutputTokens: 1024, temperature: 0.7 } })
+                });
+
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                const result  = await response.json();
+                const rawHtml = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                // Clean any accidental markdown fences
+                const cleanHtml = rawHtml.replace(/```html?/gi,'').replace(/```/g,'').trim();
+
+                statusText.innerText = 'Rendering report...';
+                injectReportContent(cleanHtml, template);
+                statusDiv.classList.add('hidden'); // Hide only on success
+
+            } catch (err) {
+                console.error('Gemini error:', err);
+                statusText.innerHTML = `<span class="text-red-400">Error: ${err.message}</span>`;
+                // Keep the error visible for 5 seconds
+                setTimeout(() => statusDiv.classList.add('hidden'), 5000);
+            } finally {
+                icon.classList.remove('animate-spin');
+                genBtn.disabled = false;
+            }
+        }
+
+        // â”€â”€ Inject AI HTML into reportPreview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function injectReportContent(html, template) {
+            const preview     = document.getElementById('reportPreview');
+            const placeholder = document.getElementById('reportPlaceholder');
+            const aiContent   = document.getElementById('aiReportContent');
+
+            // Build header
+            const templateLabel = { executive:'Executive', technical:'Technical', marketing:'Marketing' }[template] || 'Analysis';
+            const header = `
+                <div class="flex justify-between items-start mb-10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xl font-bold font-['Outfit']">DataMind <span class="text-primary">AI</span></div>
+                            <div class="text-[10px] text-gray-500 uppercase tracking-widest">${templateLabel} Report</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xs font-bold text-white mb-1">${dmFilename}</div>
+                        <div class="text-[10px] text-gray-500">${new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})}</div>
+                        <div class="text-[10px] text-gray-500">${dmRowcount} rows · ${dmColcount} columns</div>
+                    </div>
+                </div>
+                <div class="h-px w-full bg-gradient-to-r from-primary/50 via-accent/30 to-transparent mb-10"></div>
+            `;
+
+            // Style the injected content
+            aiContent.innerHTML = header + html;
+            aiContent.querySelectorAll('h3').forEach(el => {
+                el.className = 'font-bold text-white text-lg mb-3 mt-8 first:mt-0';
+            });
+            aiContent.querySelectorAll('p').forEach(el => {
+                el.className = 'text-gray-400 leading-relaxed';
+            });
+            aiContent.querySelectorAll('ul').forEach(el => {
+                el.className = 'space-y-2 ml-4 mt-2';
+            });
+            aiContent.querySelectorAll('li').forEach(el => {
+                el.className = 'text-gray-400 flex gap-2';
+                el.innerHTML = '<span class="text-primary mt-1">•</span><span>' + el.innerHTML + '</span>';
+            });
+            aiContent.querySelectorAll('strong').forEach(el => {
+                el.className = 'text-white';
+            });
+            aiContent.querySelectorAll('section').forEach(el => {
+                el.className = 'space-y-3';
+            });
+
+            // Show AI content, hide placeholder
+            placeholder.classList.add('hidden');
+            aiContent.classList.remove('hidden');
+
+            // Enable PDF button
+            const pdfBtn = document.getElementById('pdfDownloadBtn');
+            if (pdfBtn) pdfBtn.disabled = false;
+
+            // Refresh icons
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // â”€â”€ PDF Download â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        async function downloadPDF() {
+            const pdfBtn     = document.getElementById('pdfDownloadBtn');
+            const statusDiv  = document.getElementById('exportStatus');
+            const statusText = document.getElementById('statusText');
+            
+            setLoading(pdfBtn, true, 'Generating PDF...');
+            statusDiv.classList.remove('hidden');
+            statusText.innerText = 'Capturing report...';
+
+            try {
+                const reportPreview = document.getElementById('reportPreview');
+                const canvas = await html2canvas(reportPreview, {
+                    scale: 2,
+                    backgroundColor: '#030305',
+                    useCORS: true
+                });
+                statusText.innerText = 'Building PDF...';
+                const { jsPDF } = window.jspdf;
+                const imgData  = canvas.toDataURL('image/png');
+                const pdf      = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                const filename = dmFilename.replace(/\.(csv|xlsx|xls)$/i, '') + '-report.pdf';
+                pdf.save(filename);
+            } catch (err) {
+                console.error('PDF error:', err);
+                showToast('PDF generation failed: ' + err.message, 'error');
+            } finally {
+                setLoading(pdfBtn, false);
+                statusDiv.classList.add('hidden');
+            }
+        }
+
+        // â”€â”€ Legacy startExport (Charts, Dataset) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        function startExport(type) {
+            if (type === 'PDF Report') { downloadPDF(); return; }
+            const modal = document.getElementById('exportStatus');
+            const statusText = document.getElementById('statusText');
+            modal.classList.remove('hidden');
+            statusText.innerText = `Preparing ${type}...`;
+            setTimeout(() => {
+                statusText.innerText = `Finalizing ${type}...`;
+                setTimeout(() => { modal.classList.add('hidden'); }, 1200);
+            }, 1000);
+        }
+    </script>
+    <!-- Firebase Auth Guard -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+        import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+        const app = initializeApp(CONFIG.firebaseConfig);
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                // Update User Identity
+                const storedName = localStorage.getItem('dm_user_name') || user.displayName || user.email.split('@')[0];
+                if (storedName) {
+                    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = storedName);
+                    document.querySelectorAll('.user-avatar-display').forEach(el => {
+                        el.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(storedName)}&background=random`;
+                    });
+                }
+            }
+        });
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        const dropdownLogoutBtn = document.getElementById('dropdownLogoutBtn');
+        
+        const handleLogout = async (e) => {
+            e.preventDefault();
+            await signOut(auth);
+            localStorage.removeItem('dm_user_email');
+            localStorage.removeItem('dm_user_name');
+            window.location.href = 'index.html';
+        };
+
+        if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+        if (dropdownLogoutBtn) dropdownLogoutBtn.addEventListener('click', handleLogout);
+
+        // Dropdown Toggle Logic
+        const profileBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                profileDropdown.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!profileDropdown.contains(e.target) && !profileBtn.contains(e.target)) {
+                    profileDropdown.classList.add('hidden');
+                }
+            });
+        }
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (menuToggle) {
+          menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('visible');
+          });
+          overlay.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('visible');
+          });
+        }
+    </script>
+    </script>
+<script>
+(function(){
+  var btn=document.getElementById('hamburgerBtn');
+  var sidebar=document.querySelector('.sidebar');
+  var h1=document.getElementById('hb1');
+  var h2=document.getElementById('hb2');
+  var h3=document.getElementById('hb3');
+  if(!btn||!sidebar)return;
+  sidebar.style.transition='margin-left 0.3s ease';
+  var open=localStorage.getItem('dm_sidebar_open')!=='false';
+  function applyState(isOpen,animate){
+    if(!animate)sidebar.style.transition='none';
+    sidebar.style.marginLeft=isOpen?'0px':'-260px';
+    if(!animate)setTimeout(function(){sidebar.style.transition='margin-left 0.3s ease';},50);
+    if(isOpen){h1.style.transform='none';h2.style.opacity='1';h2.style.transform='none';h3.style.transform='none';}
+    else{h1.style.transform='translateY(7px) rotate(45deg)';h2.style.opacity='0';h2.style.transform='scaleX(0)';h3.style.transform='translateY(-7px) rotate(-45deg)';}
+  }
+  applyState(open,false);
+  btn.addEventListener('click',function(){open=!open;localStorage.setItem('dm_sidebar_open',open?'true':'false');applyState(open,true);});
+})();
+</script></body>
+</html>
