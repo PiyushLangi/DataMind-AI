@@ -10,9 +10,9 @@ const CONFIG = {
 
     // Firebase Configuration
     firebaseConfig: {
-        apiKey: "AIzaSyD0TSlpLX6CaohJAg-PKrPiaENROqd_UAA",
-        authDomain: "datamind-ai-1e132.firebaseapp.com",
-        projectId: "datamind-ai-1e132",
+        apiKey: "YOUR_FIREBASE_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
         storageBucket: "datamind-ai-1e132.firebasestorage.app",
         messagingSenderId: "515616745229",
         appId: "1:515616745229:web:fc89568041c1b5e4e9f244"
